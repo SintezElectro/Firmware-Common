@@ -252,11 +252,15 @@ static xResult privateRequestListener(xRequestControlT* control, xRequestControl
 	switch ((uint32_t)selector)
 	{
 		case xRequestControlAdapterRequestLock:
+#ifdef INC_FREERTOS_H
 			xSemaphoreTake(adapter->Content.CoreMutex, portMAX_DELAY);
+#endif
 			break;
 
 		case xRequestControlAdapterRequestUnLock:
+#ifdef INC_FREERTOS_H
 			xSemaphoreGive(adapter->Content.CoreMutex);
+#endif
 			break;
 
 		case xRequestControlAdapterRequestAdd:
@@ -313,13 +317,14 @@ xResult CAN_LocalRequestControlAdapterInit(xRequestControlT* control,
 	control->Adapter.Content = adapter;
 	control->Adapter.Interface = &privateAdapterInterface;
 
-	adapter->Content.CoreMutex = xSemaphoreCreateMutex();
-
 	adapter->Port = init->Port;
 	adapter->RequestBuffer = init->RequestBuffer;
 	adapter->RequestBufferSize = init->RequestBufferSize;
 
+#ifdef INC_FREERTOS_H
+	adapter->Content.CoreMutex = xSemaphoreCreateMutex();
 	control->ProcessedRequests.Content = xSemaphoreCreateMutex();
+#endif
 
 	return xResultError;
 }

@@ -2,10 +2,11 @@
 //includes:
 
 #include <stdlib.h>
+#include "Common/xMemory.h"
 #include "Abstractions/xSystem/xSystem.h"
 #include "TemperatureService-Adapter.h"
 #include "CAN_Local-Types.h"
-#include "Components/TransferLayer/TransferLayer-Component.h"
+#include "Components/TransferLayer/Local/LocalTransferLayer-Component.h"
 //==============================================================================
 //defines:
 
@@ -17,7 +18,6 @@
 //==============================================================================
 //variables:
 
-extern xTransferLayerT ExternalTransferLayer;
 static uint32_t privateCount;
 
 static xTransferT* privateSlaveTransfer;
@@ -35,6 +35,7 @@ static void privateTransferEventListener(xTransferLayerT* layer, xTransferT* tra
 
 		}
 	}*/
+	xMemoryFree(transfer->Data);
 }
 //------------------------------------------------------------------------------
 static void privateOpenTransferHandler(TemperatureServiceT* service,
@@ -43,7 +44,10 @@ static void privateOpenTransferHandler(TemperatureServiceT* service,
 {
 	CAN_LocalRequestContentOpenTransferT request = { .Value = segment->Data.Value };
 
-	if (request.ServiceId == service->Base.Id)
+	xTransferLayerT* transferLayer = NULL;
+	xServiceRequestListener((xServiceT*)service, xServiceRequestGetTransferLayer, NULL, &transferLayer);
+
+	if (request.ServiceId == service->Base.Id && transferLayer)
 	{
 		privateCount++;
 
@@ -53,7 +57,7 @@ static void privateOpenTransferHandler(TemperatureServiceT* service,
 		response.Result = xResultError;
 		response.Token = -1;
 
-		privateSlaveTransfer = xTransferLayerNewTransfer(&ExternalTransferLayer);
+		privateSlaveTransfer = xTransferLayerNewTransfer(transferLayer);
 
 		if (privateSlaveTransfer)
 		{
@@ -68,14 +72,13 @@ static void privateOpenTransferHandler(TemperatureServiceT* service,
 
 			if (privateSlaveTransfer->Type == xTransferTypeReceive)
 			{
-				memset(transferRxData, 0, sizeof(transferRxData));
-				privateSlaveTransfer->Data = transferRxData;
-				privateSlaveTransfer->DataLength = sizeof(transferRxData);
+				privateSlaveTransfer->Data = xMemoryAllocate(1, sizeof_str(TEMPERATURE_SERVICE_TX_DATA));
+				privateSlaveTransfer->DataLength = sizeof_str(TEMPERATURE_SERVICE_TX_DATA);
 			}
 			else if (privateSlaveTransfer->Type == xTransferTypeTransmite)
 			{
-				privateSlaveTransfer->Data = (uint8_t*)transferTxData;
-				privateSlaveTransfer->DataLength = sizeof_str(transferTxData);
+				privateSlaveTransfer->Data = (uint8_t*)TEMPERATURE_SERVICE_TX_DATA;
+				privateSlaveTransfer->DataLength = sizeof_str(TEMPERATURE_SERVICE_TX_DATA);
 			}
 
 			privateSlaveTransfer->Token = response.Token;
@@ -84,9 +87,7 @@ static void privateOpenTransferHandler(TemperatureServiceT* service,
 
 			privateSlaveTransfer->EventListener = privateTransferEventListener;
 
-			memset(transferRxData, 0, sizeof(transferRxData));
-
-			xTransferLayerAdd(&ExternalTransferLayer, privateSlaveTransfer);
+			xTransferLayerAdd(transferLayer, privateSlaveTransfer);
 		}
 
 		CAN_LocalSegmentT packet;
@@ -290,8 +291,8 @@ static xResult privateRequestListener(TemperatureServiceT* service, int selector
 
 static TemperatureServiceAdapterInterfaceT privateInterface =
 {
-	.Handler = (TemperatureServiceAdapterHandlerT)privateHandler,
-	.RequestListener = (TemperatureServiceAdapterRequestListenerT)privateRequestListener
+	.Handler = (xServiceAdapterHandlerT)privateHandler,
+	.RequestListener = (xServiceAdapterRequestListenerT)privateRequestListener
 };
 //------------------------------------------------------------------------------
 xResult TemperatureServiceAdapterInit(TemperatureServiceT* service,

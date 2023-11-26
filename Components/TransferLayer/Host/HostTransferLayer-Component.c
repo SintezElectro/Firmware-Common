@@ -1,20 +1,21 @@
 //==============================================================================
 //includes:
 
-#include "TransferLayer-Component.h"
+#include "Common/xMemory.h"
+
+#include "HostTransferLayer-Component.h"
 #include "CAN-Ports/CAN_Ports-Component.h"
 
 #include "CAN_Local-Types.h"
 #include "Abstractions/xTransferLayer/xTransferLayer.h"
 #include "Abstractions/xSystem/xSystem.h"
-#include "Adapters/TransferLayer-Adapter.h"
+#include "../Adapters/TransferLayer-Adapter.h"
 
 #include "Components.h"
 //==============================================================================
 //defines:
 
-#define CAN_LOCAL_TRANSFER_BUFFER_SIZE 20
-#define CAN_EXTERNAL_TRANSFER_BUFFER_SIZE 20
+#define HOST_TRANSFER_LAYER_BUFFER_SIZE 20
 //==============================================================================
 //import:
 
@@ -22,13 +23,9 @@
 //==============================================================================
 //variables:
 
-uint8_t transferRxData[sizeof_str(transferTxData)];
+static CAN_LocalTransferT CAN_HostTransfersBuffer[HOST_TRANSFER_LAYER_BUFFER_SIZE];
 
-static CAN_LocalTransferT CAN_LocalTransfersBuffer[CAN_LOCAL_TRANSFER_BUFFER_SIZE];
-static CAN_LocalTransferT CAN_ExternalTransfersBuffer[CAN_EXTERNAL_TRANSFER_BUFFER_SIZE];
-
-xTransferLayerT LocalTransferLayer;
-xTransferLayerT ExternalTransferLayer;
+xTransferLayerT HostTransferLayer;
 
 static uint32_t privateTimeStamp;
 static uint32_t privateTimeStamp1;
@@ -48,12 +45,13 @@ volatile static struct
 static void transferComplite(xTransferLayerT* layer, xTransferT* transfer, int selector, void* arg)
 {
 	transfer->State = xTransferStateIdle;
+
+	xMemoryFree(transfer->Data);
 }
 //------------------------------------------------------------------------------
-void TransferLayerComponentHandler()
+void HostTransferLayerComponentHandler()
 {
-	xTransferLayerHandlerDirect(LocalTransferLayer);
-	xTransferLayerHandlerDirect(ExternalTransferLayer);
+	xTransferLayerHandlerDirect(HostTransferLayer);
 
 	//return;
 
@@ -77,17 +75,16 @@ void TransferLayerComponentHandler()
 
 			if (privateMasterTransfer->Type == xTransferTypeTransmite)
 			{
-				privateMasterTransfer->Data = (uint8_t*)transferTxData;
-				privateMasterTransfer->DataLength = sizeof_str(transferTxData);
+				privateMasterTransfer->Data = (uint8_t*)TEMPERATURE_SERVICE_TX_DATA;
+				privateMasterTransfer->DataLength = sizeof_str(TEMPERATURE_SERVICE_TX_DATA);
 			}
 			else if (privateMasterTransfer->Type == xTransferTypeReceive)
 			{
-				memset(transferRxData, 0, sizeof(transferRxData));
-				privateMasterTransfer->Data = (uint8_t*)transferRxData;
-				privateMasterTransfer->DataLength = sizeof(transferRxData);
+				privateMasterTransfer->Data = xMemoryAllocate(1, sizeof_str(TEMPERATURE_SERVICE_TX_DATA));
+				privateMasterTransfer->DataLength = sizeof_str(TEMPERATURE_SERVICE_TX_DATA);
 			}
 
-			xTransferLayerAdd(&LocalTransferLayer, privateMasterTransfer);
+			xTransferLayerAdd(&HostTransferLayer, privateMasterTransfer);
 		}
 	}
 
@@ -112,36 +109,29 @@ void TransferLayerComponentHandler()
 
 		if (privateFlags.CAN_Local2NoiseIsEnable)
 		{
-			xPortExtendedTransmition(&CAN_Port2, &packet);
+			xPortExtendedTransmition(&HOST_TRANSFER_LAYER_PORT, &packet);
 		}
 	}
 }
 //==============================================================================
 //initializations:
 
-static TransferLayerAdapterT privateAdapter1;
-static TransferLayerAdapterT privateAdapter2;
+static TransferLayerAdapterT privateHostTransferLayerAdapter;
+
 //==============================================================================
 //initialization:
 
-xResult TransferLayerComponentInit(void* parent)
+xResult HostTransferLayerComponentInit(void* parent)
 {
 	TransferLayerAdapterInitT adapterInit;
-	adapterInit.Port = &CAN_Port1;
-	TransferLayerAdapterInit(&LocalTransferLayer, &privateAdapter1, &adapterInit);
-
-	adapterInit.Port = &CAN_Port2;
-	TransferLayerAdapterInit(&ExternalTransferLayer, &privateAdapter2, &adapterInit);
+	adapterInit.Port = &HOST_TRANSFER_LAYER_PORT;
+	TransferLayerAdapterInit(&HostTransferLayer, &privateHostTransferLayerAdapter, &adapterInit);
 
 	xTransferLayerInitT init;
 	init.Parent = parent;
-	init.Transfers = (void*)&CAN_LocalTransfersBuffer;
-	init.TransfersCount = CAN_LOCAL_TRANSFER_BUFFER_SIZE;
-	xTransferLayerInit(&LocalTransferLayer, &init);
-
-	init.Transfers = (void*)&CAN_ExternalTransfersBuffer;
-	init.TransfersCount = CAN_EXTERNAL_TRANSFER_BUFFER_SIZE;
-	xTransferLayerInit(&ExternalTransferLayer, &init);
+	init.Transfers = (void*)&CAN_HostTransfersBuffer;
+	init.TransfersCount = HOST_TRANSFER_LAYER_BUFFER_SIZE;
+	xTransferLayerInit(&HostTransferLayer, &init);
 
 	return xResultAccept;
 }

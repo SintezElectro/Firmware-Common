@@ -3,7 +3,7 @@
 
 #include "Common/xMemory.h"
 #include "VirtualDevice-Adapter.h"
-#include "Components/TransferLayer/TransferLayer-Component.h"
+//#include "Components/TransferLayer/TransferLayer-Component.h"
 #include "Services/Temperature/Adapters/VirtualTemperatureService-Adapter.h"
 
 #include "Components.h"
@@ -184,7 +184,7 @@ static xResult PrivateRequestListener(xDeviceT* device, xDeviceAdapterRequestSel
 		case xDeviceAdapterRequestGetTransferLayer:
 		{
 			//*(void**)arg = adapter->TransferLayer;
-			*(void**)arg = &LocalTransferLayer;
+			*(void**)arg = &HostTransferLayer;
 			break;
 		}
 

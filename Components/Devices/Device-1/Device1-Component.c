@@ -3,7 +3,7 @@
 
 #include "Device1-Component.h"
 #include "CAN-Ports/CAN_Ports-Component.h"
-#include "Components/TransferLayer/TransferLayer-Component.h"
+#include "Components/TransferLayer/Local/LocalTransferLayer-Component.h"
 
 #include "Services/Temperature/Adapters/TemperatureService-Adapter.h"
 #include "Services/GAP/Adapters/GAPService-Adapter.h"
@@ -82,8 +82,8 @@ static TemperatureServiceAdapterT privateTemperatureServiceAdapter2;
 xResult Device1ComponentInit(void* parent)
 {
 	ClientDeviceAdapterInitT deviceAdapterInit;
-	deviceAdapterInit.Port = &CAN_Port2;
-	deviceAdapterInit.TransferLayer = &ExternalTransferLayer;
+	deviceAdapterInit.Port = &DEVICE_1_PORT;
+	deviceAdapterInit.TransferLayer = &LocalTransferLayer;
 	ClientDeviceAdapterInit(&Device1, &privateDeviceAdapter, &deviceAdapterInit);
 
 	xDeviceInitT deviceInit = { 0 };
@@ -95,7 +95,7 @@ xResult Device1ComponentInit(void* parent)
 	Device1.MAC = UniqueDeviceID->MAC;
 	//----------------------------------------------------------------------------
 	GAPServiceAdapterInitT gapServiceAdapterInit;
-	gapServiceAdapterInit.Port = &CAN_Port2;
+	gapServiceAdapterInit.Port = &DEVICE_1_PORT;
 	GAPServiceAdapterInit(&GAPService, &privateGAPServiceAdapter, &gapServiceAdapterInit);
 
 	GAPServiceInitT gapServiceInit;
@@ -106,7 +106,7 @@ xResult Device1ComponentInit(void* parent)
 	xDeviceAddService(&Device1, (xServiceT*)&GAPService);
 	//----------------------------------------------------------------------------
 	TemperatureServiceAdapterInitT temperatureServiceAdapterInit;
-	temperatureServiceAdapterInit.Port = &CAN_Port2;
+	temperatureServiceAdapterInit.Port = &DEVICE_1_PORT;
 	TemperatureServiceAdapterInit(&TemperatureService3, &privateTemperatureServiceAdapter1, &temperatureServiceAdapterInit);
 	TemperatureServiceAdapterInit(&TemperatureService4, &privateTemperatureServiceAdapter2, &temperatureServiceAdapterInit);
 

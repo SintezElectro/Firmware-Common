@@ -182,8 +182,8 @@ static xResult privateRequestListener(TemperatureServiceT* service, int selector
 
 static TemperatureServiceAdapterInterfaceT privateInterface =
 {
-	.Handler = (TemperatureServiceAdapterHandlerT)privateHandler,
-	.RequestListener = (TemperatureServiceAdapterRequestListenerT)privateRequestListener
+	.Handler = (xServiceAdapterHandlerT)privateHandler,
+	.RequestListener = (xServiceAdapterRequestListenerT)privateRequestListener
 };
 //------------------------------------------------------------------------------
 xResult VirtualTemperatureServiceAdapterInit(TemperatureServiceT* service,

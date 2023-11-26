@@ -1,6 +1,7 @@
 //==============================================================================
 //includes:
 
+#include "CAN_Local-Types.h"
 #include "VirtualServiceCommonRequests.h"
 #include "Components/RequestControl/Host/HostRequestControl-Component.h"
 #include "Components/Devices/Host/HostDevice-Component.h"

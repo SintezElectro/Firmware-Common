@@ -6,7 +6,7 @@
 #include "GAPService-Adapter.h"
 #include "Abstractions/xSystem/xSystem.h"
 #include "CAN_Local-Types.h"
-#include "Components/TransferLayer/TransferLayer-Component.h"
+#include "Components/TransferLayer/Host/HostTransferLayer-Component.h"
 //==============================================================================
 //defines:
 
@@ -35,7 +35,10 @@ static void privateOpenTransferHandler(GAPServiceT* service,
 {
 	CAN_LocalRequestContentOpenTransferT request = { .Value = segment->Data.DoubleWord };
 
-	if (request.ServiceId == service->Base.Id)
+	xTransferLayerT* transferLayer = NULL;
+	xServiceRequestListener((xServiceT*)service, xServiceRequestGetTransferLayer, NULL, &transferLayer);
+
+	if (request.ServiceId == service->Base.Id && transferLayer)
 	{
 		CAN_LocalResponseContentOpenTransferT response;
 		response.ServiceId = segment->ExtensionHeader.ServiceId;
@@ -43,7 +46,7 @@ static void privateOpenTransferHandler(GAPServiceT* service,
 		response.Token = -1;
 		response.Result = xResultError;
 
-		xTransferT* transfer = xTransferLayerNewTransfer(&ExternalTransferLayer);
+		xTransferT* transfer = xTransferLayerNewTransfer(transferLayer);
 		CAN_LocalTransferT* extansion = (void*)transfer;
 
 		if (transfer == NULL)
@@ -78,7 +81,7 @@ static void privateOpenTransferHandler(GAPServiceT* service,
 
 		if (transfer)
 		{
-			xTransferLayerAdd(&ExternalTransferLayer, transfer);
+			xTransferLayerAdd(transferLayer, transfer);
 		}
 
 		xPortExtendedTransmition(adapter->Port, &packet);

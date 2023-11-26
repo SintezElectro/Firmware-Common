@@ -1,32 +1,26 @@
 //==============================================================================
-//header:
-
-#ifndef _HOST_DEVICE_COMPONENT_CONFIG_H_
-#define _HOST_DEVICE_COMPONENT_CONFIG_H_
+#ifndef _RELAY_SERVICE_RX_TRANSACTIONS_H_
+#define _RELAY_SERVICE_RX_TRANSACTIONS_H_
 //------------------------------------------------------------------------------
 #ifdef __cplusplus
 extern "C" {
-#endif
+#endif 
 //==============================================================================
 //includes:
 
-#include "Components-Types.h"
-#include "HostDevice-ComponentConfig.h"
+#include "Common/xRxTransaction.h"
 //==============================================================================
-//macros:
+//types:
 
+/**
+ * @brief перечисление запросов возможных ActionKey
+ */
+//------------------------------------------------------------------------------
 
-//==============================================================================
-//import:
-
-
-//==============================================================================
-//defines:
-
-
+extern const xRxRequestT RelayServiceRxRequests[];
 //==============================================================================
 #ifdef __cplusplus
 }
 #endif
 //------------------------------------------------------------------------------
-#endif //_HOST_DEVICE_COMPONENT_CONFIG_H_
+#endif //_RELAY_SERVICE_RX_TRANSACTIONS_H_

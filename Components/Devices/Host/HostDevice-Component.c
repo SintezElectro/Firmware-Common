@@ -6,6 +6,7 @@
 
 #include "Abstractions/xDevice/Communication/xDevice-RxTransactions.h"
 #include "Abstractions/xDevice/Communication/xService-RxTransactions.h"
+
 #include "Services/Temperature/Communication/TemperatureService-RxTransactions.h"
 #include "Services/Relay/Communication/RelayService-RxTransactions.h"
 
@@ -158,8 +159,8 @@ xResult HostDeviceComponentInit(void* parent)
 	HostRequestControlComponentInit(parent);
 
 	HostDeviceAdapterInitT deviceAdapterInit;
-	deviceAdapterInit.Port = &CAN_Port1;
-	deviceAdapterInit.TransferLayer = &LocalTransferLayer;
+	deviceAdapterInit.Port = &HOST_DEVICE_PORT;
+	deviceAdapterInit.TransferLayer = &HostTransferLayer;
 	HostDeviceAdapterInit(&HostDevice, &privateHostDeviceAdapter, &deviceAdapterInit);
 
 	xDeviceInitT deviceInit = { 0 };
@@ -171,7 +172,7 @@ xResult HostDeviceComponentInit(void* parent)
 	HostDevice.MAC = UniqueDeviceID->MAC;
 	//----------------------------------------------------------------------------
 	GAPServiceAdapterInitT gapServiceAdapterInit;
-	gapServiceAdapterInit.Port = &CAN_Port1;
+	gapServiceAdapterInit.Port = &HOST_DEVICE_PORT;
 	GAPServiceAdapterInit(&HostGAP, &privateGAPServiceAdapter, &gapServiceAdapterInit);
 
 	GAPServiceInitT gapServiceInit;
@@ -182,7 +183,7 @@ xResult HostDeviceComponentInit(void* parent)
 	xDeviceAddService(&HostDevice, (xServiceT*)&HostGAP);
 	//----------------------------------------------------------------------------
 	TemperatureServiceAdapterInitT temperatureServiceAdapterInit;
-	temperatureServiceAdapterInit.Port = &CAN_Port1;
+	temperatureServiceAdapterInit.Port = &HOST_DEVICE_PORT;
 	TemperatureServiceAdapterInit(&TemperatureService1, &privateTemperatureServiceAdapter1, &temperatureServiceAdapterInit);
 	TemperatureServiceAdapterInit(&TemperatureService2, &privateTemperatureServiceAdapter2, &temperatureServiceAdapterInit);
 

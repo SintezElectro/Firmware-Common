@@ -396,8 +396,9 @@ static void privateHandler(xTransferLayerT* manager)
 //------------------------------------------------------------------------------
 static xResult privateRequestAdd(xTransferLayerT* manager, TransferLayerAdapterT* adapter, xTransferT* transfer)
 {
+#ifdef INC_FREERTOS_H
 	xSemaphoreTake(adapter->Content.CoreMutex, portMAX_DELAY);
-
+#endif
 	if (transfer->State == xTransferStateIdle || transfer->State == xTransferStatePreparing)
 	{
 		transfer->IsRunning = true;
@@ -446,9 +447,9 @@ static xResult privateRequestAdd(xTransferLayerT* manager, TransferLayerAdapterT
 		transfer->Internal.TimeStamp = xSystemGetTime(NULL);
 		xListAdd((void*)&manager->ProcessedTransfers, transfer);
 	}
-
+#ifdef INC_FREERTOS_H
 	xSemaphoreGive(adapter->Content.CoreMutex);
-
+#endif
 	return xResultBusy;
 }
 //------------------------------------------------------------------------------
@@ -459,11 +460,15 @@ static xResult privateRequestListener(xTransferLayerT* manager, xTransferLayerAd
 	switch ((uint32_t)selector)
 	{
 		case xTransferLayerAdapterRequestLock:
+#ifdef INC_FREERTOS_H
 			xSemaphoreTake(adapter->Content.CoreMutex, portMAX_DELAY);
+#endif
 			break;
 
 		case xTransferLayerAdapterRequestUnLock:
+#ifdef INC_FREERTOS_H
 			xSemaphoreGive(adapter->Content.CoreMutex);
+#endif
 			break;
 
 		case xTransferLayerAdapterRequestAdd:
@@ -492,9 +497,9 @@ xResult TransferLayerAdapterInit(xTransferLayerT* manager,
 	manager->Adapter.Description = nameof(TransferLayerAdapterT);
 	manager->Adapter.Content = adapter;
 	manager->Adapter.Interface = &privateAdapterInterface;
-
+#ifdef INC_FREERTOS_H
 	adapter->Content.CoreMutex = xSemaphoreCreateMutex();
-
+#endif
 	adapter->Port = init->Port;
 
 	adapter->Content.PortRxCircleBuffer = xPortGetRxCircleBuffer(adapter->Port);

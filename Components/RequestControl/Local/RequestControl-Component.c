@@ -8,7 +8,7 @@
 //==============================================================================
 //defines:
 
-#define REQUEST_BUFFER_SIZE 10
+
 //==============================================================================
 //import:
 
@@ -16,7 +16,7 @@
 //==============================================================================
 //variables:
 
-static CAN_LocalRequestT CAN_LocalRequestBuffer[REQUEST_BUFFER_SIZE];
+static CAN_LocalRequestT CAN_LocalRequestBuffer[REQUEST_CONTROL_BUFFER_SIZE];
 
 xRequestControlT RequestControl;
 //==============================================================================
@@ -37,7 +37,7 @@ xResult RequestControlComponentInit(void* parent)
 {
 	CAN_LocalRequestControlAdapterInitT adapterInit;
 	adapterInit.RequestBuffer = (void*)CAN_LocalRequestBuffer;
-	adapterInit.RequestBufferSize = REQUEST_BUFFER_SIZE;
+	adapterInit.RequestBufferSize = REQUEST_CONTROL_BUFFER_SIZE;
 	adapterInit.Port = &REQUEST_CONTROL_PORT;
 	CAN_LocalRequestControlAdapterInit(&RequestControl, &privateRequestControlAdapter, &adapterInit);
 

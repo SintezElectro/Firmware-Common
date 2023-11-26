@@ -1,31 +1,26 @@
 //==============================================================================
-//header:
-
-#ifndef _HOST_REQUEST_CONTROL_COMPONENT_CONFIG_H_
-#define _HOST_REQUEST_CONTROL_COMPONENT_CONFIG_H_
+#ifndef _TEMPERATURE_SERVICE_RX_TRANSACTIONS_H_
+#define _TEMPERATURE_SERVICE_RX_TRANSACTIONS_H_
 //------------------------------------------------------------------------------
 #ifdef __cplusplus
 extern "C" {
-#endif
+#endif 
 //==============================================================================
 //includes:
 
-#include "Components-Types.h"
+#include "Common/xRxTransaction.h"
 //==============================================================================
-//macros:
+//types:
 
+/**
+ * @brief перечисление запросов возможных ActionKey
+ */
+//------------------------------------------------------------------------------
 
-//==============================================================================
-//import:
-
-
-//==============================================================================
-//defines:
-
-
+extern const xRxRequestT TemperatureServiceRxRequests[];
 //==============================================================================
 #ifdef __cplusplus
 }
 #endif
 //------------------------------------------------------------------------------
-#endif //_HOST_REQUEST_CONTROL_COMPONENT_CONFIG_H_
+#endif //_TEMPERATURE_SERVICE_RX_TRANSACTIONS_H_

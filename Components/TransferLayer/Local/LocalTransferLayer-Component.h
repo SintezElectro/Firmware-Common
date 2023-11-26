@@ -1,8 +1,8 @@
 //==============================================================================
 //header:
 
-#ifndef _DEVICE_1_COMPONENT_H_
-#define _DEVICE_1_COMPONENT_H_
+#ifndef _LOCAL_TRANSFER_LAYER_COMPONENT_H_
+#define _LOCAL_TRANSFER_LAYER_COMPONENT_H_
 //------------------------------------------------------------------------------
 #ifdef __cplusplus
 extern "C" {
@@ -11,20 +11,29 @@ extern "C" {
 //includes:
 
 #include "Components-Types.h"
-#include "Device1-ComponentConfig.h"
-#include "Abstractions/xDevice/xDevice.h"
-#include "Services/Temperature/TemperatureService.h"
+#include "LocalTransferLayer-ComponentConfig.h"
+#include "CAN_Local-Types.h"
+#include "Abstractions/xTransferLayer/xTransferLayer.h"
 //==============================================================================
 //defines:
 
-#define TEMPERATURE_SERVICE3_ID 2022
-#define TEMPERATURE_SERVICE4_ID 2023
+
+//==============================================================================
+//types:
+
+
+//==============================================================================
+//variables:
+
+
 //==============================================================================
 //functions:
 
-xResult Device1ComponentInit(void* parent);
-void Device1ComponentHandler();
-void Device1ComponentTimeSynchronization();
+xResult LocalTransferLayerComponentInit(void* parent);
+
+#define LocalTransferLayerComponentHandler() xTransferLayerHandlerDirect(LocalTransferLayer)
+
+#define LocalTransferLayerComponentTimeSynchronization()
 //==============================================================================
 //import:
 
@@ -36,12 +45,10 @@ void Device1ComponentTimeSynchronization();
 //==============================================================================
 //export:
 
-extern xDeviceT Device1;
-extern TemperatureServiceT TemperatureService3;
-extern TemperatureServiceT TemperatureService4;
+extern xTransferLayerT LocalTransferLayer;
 //==============================================================================
 #ifdef __cplusplus
 }
 #endif
 //------------------------------------------------------------------------------
-#endif //_DEVICE_1_COMPONENT_H_
+#endif //_LOCAL_TRANSFER_LAYER_COMPONENT_H_

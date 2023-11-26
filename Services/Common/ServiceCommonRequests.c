@@ -74,6 +74,13 @@ xResult ServiceCommonRequestListener(xServiceT* service, int selector, void* arg
 
 			break;
 		}
+		case xServiceRequestGetTransferLayer:
+		{
+			xDeviceT* holder = xServiceGetDevice(service);
+
+			xDeviceRequestListener(holder, xDeviceRequestGetTransferLayer, adapterRequest);
+			break;
+		}
 
 		default : return xResultNotSupported;
 	}

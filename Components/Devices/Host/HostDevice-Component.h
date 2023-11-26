@@ -1,7 +1,7 @@
 //==============================================================================
 //header:
 
-#ifndef _HOST_DEVICE_COMPONENT_H_
+#if !defined(_HOST_DEVICE_COMPONENT_H_) && defined(HOST_DEVICE_COMPONENT_ENABLE)
 #define _HOST_DEVICE_COMPONENT_H_
 //------------------------------------------------------------------------------
 #ifdef __cplusplus
@@ -11,6 +11,7 @@ extern "C" {
 //includes:
 
 #include "Components-Types.h"
+#include "HostDevice-ComponentConfig.h"
 #include "Abstractions/xDevice/xDevice.h"
 #include "Services/GAP/GAPService.h"
 //==============================================================================

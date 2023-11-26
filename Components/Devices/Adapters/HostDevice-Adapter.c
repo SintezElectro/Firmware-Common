@@ -132,6 +132,11 @@ static xResult PrivateRequestListener(xDeviceT* device, xDeviceAdapterRequestSel
 
 	switch ((uint32_t)selector)
 	{
+		case xDeviceRequestGetTransferLayer:
+		{
+			*((void**)arg) = adapter->TransferLayer;
+			break;
+		}
 		default : return xResultRequestIsNotFound;
 	}
 

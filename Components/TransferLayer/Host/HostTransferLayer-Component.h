@@ -1,8 +1,8 @@
 //==============================================================================
 //header:
 
-#ifndef _TRANSFER_LAYER_COMPONENT_H_
-#define _TRANSFER_LAYER_COMPONENT_H_
+#if !defined(_HOST_TRANSFER_LAYER_COMPONENT_H_) && defined(HOST_TRANSFER_LAYER_COMPONENT_ENABLE)
+#define _HOST_TRANSFER_LAYER_COMPONENT_H_
 //------------------------------------------------------------------------------
 #ifdef __cplusplus
 extern "C" {
@@ -12,6 +12,7 @@ extern "C" {
 
 #include "Components-Types.h"
 #include "CAN_Local-Types.h"
+#include "HostTransferLayer-ComponentConfig.h"
 #include "Abstractions/xTransferLayer/xTransferLayer.h"
 //==============================================================================
 //defines:
@@ -22,21 +23,13 @@ extern "C" {
 
 
 //==============================================================================
-//variables:
-
-static const uint8_t transferTxData[] = "11223344556677889900112233445566778111111111111111111111111111111111111642724574864978764363474626326358888888888888843566313453452363568679567983563253agdgasdbjfDFSDFASGHA89900"
-		"11223344556677889900112233445566778111111111111111111111111111111111111642724574864978764363474626326358888888888888843566313453452363568679567983563253agdgasdbjfDFSDFASGHA89900"
-		"11223344556677889900112233445566778111111111111111111111111111111111111642724574864978764363474626326358888888888888843566313453452363568679567983563253agdgasdbjfDFSDFASGHA89900";
-
-extern uint8_t transferRxData[sizeof_str(transferTxData)];
-//==============================================================================
 //functions:
 
-xResult TransferLayerComponentInit(void* parent);
+xResult HostTransferLayerComponentInit(void* parent);
 
-void TransferLayerComponentHandler();
+void HostTransferLayerComponentHandler();
 
-#define TransferLayerComponentTimeSynchronization()
+#define HostTransferLayerComponentTimeSynchronization()
 //==============================================================================
 //import:
 
@@ -48,11 +41,10 @@ void TransferLayerComponentHandler();
 //==============================================================================
 //export:
 
-extern xTransferLayerT LocalTransferLayer;
-extern xTransferLayerT ExternalTransferLayer;
+extern xTransferLayerT HostTransferLayer;
 //==============================================================================
 #ifdef __cplusplus
 }
 #endif
 //------------------------------------------------------------------------------
-#endif //_TRANSFER_LAYER_COMPONENT_H_
+#endif //_HOST_TRANSFER_LAYER_COMPONENT_H_
