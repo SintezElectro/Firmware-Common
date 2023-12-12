@@ -126,7 +126,7 @@ static void PrivateHandler(xDeviceT* device)
 	}
 }
 //------------------------------------------------------------------------------
-static xResult PrivateRequestListener(xDeviceT* device, xDeviceAdapterRequestSelector selector, void* arg)
+static xResult PrivateRequestListener(xDeviceT* device, xDeviceAdapterRequestSelector selector, uint32_t mode, void* in, void* out)
 {
 	HostDeviceAdapterT* adapter = (HostDeviceAdapterT*)device->Adapter.Content;
 
@@ -134,7 +134,7 @@ static xResult PrivateRequestListener(xDeviceT* device, xDeviceAdapterRequestSel
 	{
 		case xDeviceRequestGetTransferLayer:
 		{
-			*((void**)arg) = adapter->TransferLayer;
+			*((void**)out) = adapter->TransferLayer;
 			break;
 		}
 		default : return xResultRequestIsNotFound;

@@ -1,6 +1,7 @@
 //==============================================================================
 //includes:
 
+#include "VirtualServiceCommonRequests-Config.h"
 #include "CAN_Local-Types.h"
 #include "VirtualServiceCommonRequests.h"
 #include "Components/RequestControl/Host/HostRequestControl-Component.h"
@@ -57,8 +58,8 @@ xResult VirtualServiceRequestSetParameter(xServiceT* sender,
 		void* data,
 		uint8_t dataSize)
 {
-	CAN_LocalRequestT* request = xRequestNew(&HostRequestControl);
-	request->Base.Sender = sender != NULL ? sender : (void*)&HostGAP;
+	CAN_LocalRequestT* request = xRequestNew(&VIRTUAL_SERVICE_DEFAULT_REQUEST_CONTROL);
+	request->Base.Sender = sender != NULL ? sender : (void*)VIRTUAL_SERVICE_DEFAULT_GAP;
 	request->Base.EventListener = privateRequestEventListener;
 	request->Action = xServiceRequestSetId;
 	request->Recipient = (void*)recipient;
@@ -67,7 +68,7 @@ xResult VirtualServiceRequestSetParameter(xServiceT* sender,
 	request->Base.TxData = data;
 	request->Base.TxDataSize = dataSize;
 
-	xRequestControlAdd(&HostRequestControl, (void*)request);
+	xRequestControlAdd(&VIRTUAL_SERVICE_DEFAULT_REQUEST_CONTROL, (void*)request);
 
 	return xResultAccept;
 }
@@ -79,8 +80,8 @@ xResult VirtualServiceRequestGetParameter(xServiceT* sender,
 		void* data,
 		uint8_t dataSize)
 {
-	CAN_LocalRequestT* request = xRequestNew(&HostRequestControl);
-	request->Base.Sender = sender != NULL ? sender : (void*)&HostGAP;
+	CAN_LocalRequestT* request = xRequestNew(&VIRTUAL_SERVICE_DEFAULT_REQUEST_CONTROL);
+	request->Base.Sender = sender != NULL ? sender : (void*)VIRTUAL_SERVICE_DEFAULT_GAP;
 	request->Base.EventListener = privateRequestEventListener;
 	request->Action = action;
 	request->Recipient = (void*)recipient;
@@ -89,12 +90,12 @@ xResult VirtualServiceRequestGetParameter(xServiceT* sender,
 	request->Base.TxData = data;
 	request->Base.TxDataSize = dataSize;
 
-	xRequestControlAdd(&HostRequestControl, (void*)request);
+	xRequestControlAdd(&VIRTUAL_SERVICE_DEFAULT_REQUEST_CONTROL, (void*)request);
 
 	return xResultAccept;
 }
 //------------------------------------------------------------------------------
-xResult VirtualServiceRequestListener(xServiceT* service, int selector, void* arg, void* adapterRequest)
+xResult VirtualServiceRequestListener(xServiceT* service, int selector, uint32_t mode, void* in, void* out)
 {
 	CAN_LocalRequestDataT requestData;
 	uint8_t requestDataSize = 0;
@@ -105,7 +106,7 @@ xResult VirtualServiceRequestListener(xServiceT* service, int selector, void* ar
 		{
 			xDeviceT* device = xServiceGetDevice(service);
 
-			xServiceRequestSetIdT* request = adapterRequest;
+			xServiceRequestSetIdT* request = in;
 
 			CAN_LocalRequestContentServiceSetIdT requestContent;
 			requestContent.ServiceId = service->Id;
@@ -123,7 +124,7 @@ xResult VirtualServiceRequestListener(xServiceT* service, int selector, void* ar
 		default : return xResultNotSupported;
 	}
 
-	VirtualServiceRequestGetParameter(NULL, (void*)service, selector, arg, &requestData, requestDataSize);
+	VirtualServiceRequestGetParameter(NULL, (void*)service, selector, out, &requestData, requestDataSize);
 
 	return xResultAccept;
 }

@@ -93,7 +93,7 @@ static void privateRequestEventListener(xRequestControlT* control, int selector,
 
 					xServiceRequestSetIdT parameter;
 					parameter.NewId = id;
-					xServiceRequestListener((xServiceT*)service, xServiceRequestSetId, NULL, &parameter);
+					xServiceRequestListener((xServiceT*)service, xServiceRequestSetId, &parameter, NULL);
 
 					id++;
 
@@ -163,7 +163,7 @@ static void privateHandler(xDeviceT* device)
 	}
 }
 //------------------------------------------------------------------------------
-static xResult PrivateRequestListener(xDeviceT* device, xDeviceAdapterRequestSelector selector, void* arg)
+static xResult PrivateRequestListener(xDeviceT* device, xDeviceAdapterRequestSelector selector, uint32_t mode, void* in, void* out)
 {
 	//VirtualDeviceAdapterT* adapter = (VirtualDeviceAdapterT*)device->Adapter.Content;
 
@@ -177,14 +177,14 @@ static xResult PrivateRequestListener(xDeviceT* device, xDeviceAdapterRequestSel
 		case xDeviceAdapterRequestGetPort:
 		{
 			//*(void**)arg = adapter->Port;
-			*(void**)arg = &CAN_Port;
+			*(void**)out = &CAN_Port;
 			break;
 		}
 
 		case xDeviceAdapterRequestGetTransferLayer:
 		{
 			//*(void**)arg = adapter->TransferLayer;
-			*(void**)arg = &HostTransferLayer;
+			*(void**)out = &HostTransferLayer;
 			break;
 		}
 

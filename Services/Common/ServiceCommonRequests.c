@@ -50,13 +50,13 @@ static void privateRequestEventListener(xRequestControlT* control, int selector,
 	xMemoryFree(asyncRequest);
 }
 //------------------------------------------------------------------------------
-xResult ServiceCommonRequestListener(xServiceT* service, int selector, void* arg, void* adapterRequest)
+xResult ServiceCommonRequestListener(xServiceT* service, int selector, uint32_t mode, void* in, void* out)
 {
 	switch (selector)
 	{
 		case xServiceRequestSetId:
 		{
-			xServiceRequestSetIdT* request = adapterRequest;
+			xServiceRequestSetIdT* request = in;
 
 			CAN_LocalBroadcastContentIdChangedT broadcastContent;
 			broadcastContent.NewId = request->NewId;
@@ -78,7 +78,7 @@ xResult ServiceCommonRequestListener(xServiceT* service, int selector, void* arg
 		{
 			xDeviceT* holder = xServiceGetDevice(service);
 
-			xDeviceRequestListener(holder, xDeviceRequestGetTransferLayer, adapterRequest);
+			xDeviceRequestListener(holder, xDeviceRequestGetTransferLayer, NULL, out);
 			break;
 		}
 

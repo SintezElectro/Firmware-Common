@@ -90,7 +90,7 @@ static void privateHandler(GAPServiceT* service)
 	}
 }
 //------------------------------------------------------------------------------
-static xResult privateRequestListener(GAPServiceT* service, int selector, void* arg, ...)
+static xResult privateRequestListener(GAPServiceT* service, int selector, uint32_t mode, void* in, void* out)
 {
 	switch ((uint32_t)selector)
 	{

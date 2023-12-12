@@ -248,11 +248,11 @@ static void privateHandler(TemperatureServiceT* service)
 	privateReceiver(service, adapter);
 }
 //------------------------------------------------------------------------------
-static xResult privateRequestListener(TemperatureServiceT* service, int selector, void* arg[])
+static xResult privateRequestListener(TemperatureServiceT* service, int selector, uint32_t mode, void* in, void* out)
 {
-	extern xResult ServiceCommonRequestListener(xServiceT* service, int selector, void* arg, void* adapterRequest);
+	extern xResult ServiceCommonRequestListener(xServiceT* service, int selector, uint32_t mode, void* in, void* out);
 
-	xIAsyncRequestT* asyncRequest = arg[0];
+	xIAsyncRequestT* asyncRequest = out;
 
 	xIAsyncResultT asyncResult = { 0 };
 	asyncResult.Holder = (void*)service;
@@ -276,7 +276,7 @@ static xResult privateRequestListener(TemperatureServiceT* service, int selector
 			break;
 		}*/
 
-		default : return ServiceCommonRequestListener((void*)service, selector, arg[0], arg[1]);
+		default : return ServiceCommonRequestListener((void*)service, selector, mode, in, out);
 	}
 
 	if(asyncRequest->Callback)

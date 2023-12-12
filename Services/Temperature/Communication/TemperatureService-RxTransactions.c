@@ -87,7 +87,8 @@ static xResult TemperatureServiceGetTemperature(xRxRequestManagerT* manager, Req
 			xIAsyncRequestT asyncRequest;
 			privatePrepareAsyncRequest(manager, &asyncRequest, NULL);
 
-			xServiceRequestListener(service, TemperatureServiceRequestGetTemperature, &asyncRequest);
+			//xServiceRequestListener(service, TemperatureServiceRequestGetTemperature, &asyncRequest);
+			xServiceAsyncRequestListener(service, TemperatureServiceRequestGetTemperature, &asyncRequest, NULL);
 		}
 	}
 

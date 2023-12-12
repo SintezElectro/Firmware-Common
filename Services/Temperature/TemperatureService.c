@@ -18,24 +18,9 @@ static const ObjectDescriptionT privateObjectDescription =
 //==============================================================================
 //functions:
 
-static void privateHandler(TemperatureServiceT* service)
-{
-	service->Adapter.Interface->Handler((void*)service);
-}
-//------------------------------------------------------------------------------
-static xResult privateRequestListener(TemperatureServiceT* service, xServiceAdapterRequestSelector selector, void* arg, ...)
-{
-	return service->Adapter.Interface->RequestListener(service, selector, &arg);
-}
+
 //==============================================================================
 //initialization:
-
-static xServiceAdapterInterfaceT privateInterface =
-{
-	.Handler = (xServiceAdapterHandlerT)privateHandler,
-	.RequestListener = (xServiceAdapterRequestListenerT)privateRequestListener
-};
-//------------------------------------------------------------------------------
 
 xResult TemperatureServiceInit(TemperatureServiceT* service, TemperatureServiceInitT* init)
 {

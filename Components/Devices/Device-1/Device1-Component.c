@@ -19,7 +19,7 @@
 //==============================================================================
 //variables:
 
-static GAPServiceT GAPService;
+GAPServiceT Device1GAP;
 
 TemperatureServiceT TemperatureService3;
 TemperatureServiceT TemperatureService4;
@@ -42,7 +42,7 @@ static void privateDeviceEventListener(xDeviceT* device, xDeviceEventSelector se
 	{
 		case xDeviceEventIdChanged:
 		{
-			GAPService.Base.Id = device->Id;
+			Device1GAP.Base.Id = device->Id;
 			break;
 		}
 
@@ -96,14 +96,14 @@ xResult Device1ComponentInit(void* parent)
 	//----------------------------------------------------------------------------
 	GAPServiceAdapterInitT gapServiceAdapterInit;
 	gapServiceAdapterInit.Port = &DEVICE_1_PORT;
-	GAPServiceAdapterInit(&GAPService, &privateGAPServiceAdapter, &gapServiceAdapterInit);
+	GAPServiceAdapterInit(&Device1GAP, &privateGAPServiceAdapter, &gapServiceAdapterInit);
 
 	GAPServiceInitT gapServiceInit;
 	gapServiceInit.Base.EventListener = (void*)privateDeviceGAPEventListener;
 	gapServiceInit.Base.Id = DEVICE_ID;
-	GAPServiceInit(&GAPService, &gapServiceInit);
+	GAPServiceInit(&Device1GAP, &gapServiceInit);
 
-	xDeviceAddService(&Device1, (xServiceT*)&GAPService);
+	xDeviceAddService(&Device1, (xServiceT*)&Device1GAP);
 	//----------------------------------------------------------------------------
 	TemperatureServiceAdapterInitT temperatureServiceAdapterInit;
 	temperatureServiceAdapterInit.Port = &DEVICE_1_PORT;

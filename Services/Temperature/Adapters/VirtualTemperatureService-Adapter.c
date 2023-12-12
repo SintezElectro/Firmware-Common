@@ -156,9 +156,9 @@ static void privateHandler(TemperatureServiceT* service)
 	}
 }
 //------------------------------------------------------------------------------
-static xResult privateRequestListener(TemperatureServiceT* service, int selector, void* arg[])
+static xResult privateRequestListener(TemperatureServiceT* service, int selector, uint32_t mode, void* in, void* out)
 {
-	extern xResult VirtualServiceRequestListener(xServiceT* service, int selector, void* arg, void* adapterRequest);
+	extern xResult VirtualServiceRequestListener(xServiceT* service, int selector, uint32_t mode, void* in, void* out);
 
 	CAN_LocalRequestDataT requestData;
 	uint8_t requestDataSize = 0;
@@ -170,10 +170,10 @@ static xResult privateRequestListener(TemperatureServiceT* service, int selector
 			break;
 		}
 
-		default : return VirtualServiceRequestListener((void*)service, selector, arg[0], arg[1]);
+		default : return VirtualServiceRequestListener((void*)service, selector, mode, in, out);
 	}
 
-	VirtualServiceRequestGetParameter(NULL, (void*)service, selector, arg[0], &requestData, requestDataSize);
+	VirtualServiceRequestGetParameter(NULL, (void*)service, selector, out, &requestData, requestDataSize);
 
 	return xResultAccept;
 }
