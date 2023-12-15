@@ -78,7 +78,7 @@ xResult ServiceCommonRequestListener(xServiceT* service, int selector, uint32_t 
 		{
 			xDeviceT* holder = xServiceGetDevice(service);
 
-			xDeviceRequestListener(holder, xDeviceRequestGetTransferLayer, NULL, out);
+			xDeviceRequestListener(holder, xDeviceRequestGetTransferLayer, 0, NULL, out);
 			break;
 		}
 

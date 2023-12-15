@@ -36,7 +36,7 @@ static void privateOpenTransferHandler(GAPServiceT* service,
 	CAN_LocalRequestContentOpenTransferT request = { .Value = segment->Data.DoubleWord };
 
 	xTransferLayerT* transferLayer = NULL;
-	xServiceRequestListener((xServiceT*)service, xServiceRequestGetTransferLayer, NULL, &transferLayer);
+	xServiceRequestListener((xServiceT*)service, xServiceRequestGetTransferLayer, 0, NULL, &transferLayer);
 
 	if (request.ServiceId == service->Base.Id && transferLayer)
 	{
@@ -148,7 +148,7 @@ static void privateRequestHandler(GAPServiceT* service,
 				{
 					xServiceRequestSetIdT parameter;
 					parameter.NewId = requestContent.NewServiceId;
-					xServiceRequestListener((xServiceT*)targetService, xServiceRequestSetId, NULL, &parameter);
+					xServiceRequestListener((xServiceT*)targetService, xServiceRequestSetId, 0, &parameter, NULL);
 				}
 				break;
 			}

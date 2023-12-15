@@ -124,7 +124,12 @@ xResult VirtualServiceRequestListener(xServiceT* service, int selector, uint32_t
 		default : return xResultNotSupported;
 	}
 
-	VirtualServiceRequestGetParameter(NULL, (void*)service, selector, out, &requestData, requestDataSize);
+	VirtualServiceRequestGetParameter(NULL,
+			(void*)service,
+			selector,
+			out,
+			&requestData,
+			requestDataSize);
 
 	return xResultAccept;
 }

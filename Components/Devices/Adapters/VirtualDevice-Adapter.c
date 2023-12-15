@@ -93,7 +93,7 @@ static void privateRequestEventListener(xRequestControlT* control, int selector,
 
 					xServiceRequestSetIdT parameter;
 					parameter.NewId = id;
-					xServiceRequestListener((xServiceT*)service, xServiceRequestSetId, &parameter, NULL);
+					xServiceRequestListener((xServiceT*)service, xServiceRequestSetId, 0, &parameter, NULL);
 
 					id++;
 
