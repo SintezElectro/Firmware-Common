@@ -20,8 +20,6 @@ typedef struct PACKED_PREFIX
 {
 	uint32_t TimeStamp;
 
-	uint16_t RxPacketHandlerIndex;
-
 } VirtualGAPServiceAdapterInternalT;
 //------------------------------------------------------------------------------
 

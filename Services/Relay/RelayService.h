@@ -44,8 +44,6 @@ typedef struct
 {
 	xServiceT Base;
 
-	RelayServiceAdapterBaseT Adapter;
-
 	uint32_t PinsState;
 
 	uint16_t Thresholds[RELAY_SERVICE_PINS_COUNT];

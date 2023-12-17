@@ -21,23 +21,13 @@
 
 static void privateHandler(RelayServiceT* service)
 {
-	RelayServiceAdapterT* adapter = service->Adapter.Content;
-
-	uint32_t totalTime = xSystemGetTime(service);
-
-	if (adapter->Internal.TimeStamp - totalTime > 500)
-	{
-		adapter->Internal.TimeStamp = totalTime;
-
-		//service->Relay = 10.0f + (float)(rand() & 0x3fff) / 1000;
-	}
+	
 }
 //------------------------------------------------------------------------------
 static xResult privateRequestListener(RelayServiceT* service, int selector, void* arg)
 {
 	switch ((uint32_t)selector)
 	{
-
 		default : return xResultRequestIsNotFound;
 	}
 
@@ -48,8 +38,8 @@ static xResult privateRequestListener(RelayServiceT* service, int selector, void
 
 static RelayServiceAdapterInterfaceT privateInterface =
 {
-	.Handler = (RelayServiceAdapterHandlerT)privateHandler,
-	.RequestListener = (RelayServiceAdapterRequestListenerT)privateRequestListener
+	.Handler = (xServiceAdapterHandlerT)privateHandler,
+	.RequestListener = (xServiceAdapterRequestListenerT)privateRequestListener
 };
 //------------------------------------------------------------------------------
 xResult RelayServiceAdapterInit(RelayServiceT* service,
@@ -58,9 +48,9 @@ xResult RelayServiceAdapterInit(RelayServiceT* service,
 {
 	if (service && init)
 	{
-		service->Adapter.Content = adapter;
-		service->Adapter.Interface = &privateInterface;
-		service->Adapter.Description = nameof(RelayServiceAdapterT);
+		service->Base.Adapter.Content = adapter;
+		service->Base.Adapter.Interface = &privateInterface;
+		//service->Adapter.Description = nameof(RelayServiceAdapterT);
 
 		return xResultAccept;
 	}

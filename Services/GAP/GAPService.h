@@ -33,8 +33,6 @@ typedef struct
 {
 	xServiceT Base;
 
-	//GAPServiceAdapterBaseT Adapter;
-
 } GAPServiceT;
 //------------------------------------------------------------------------------
 

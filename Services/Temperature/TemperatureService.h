@@ -38,8 +38,6 @@ typedef struct TemperatureServiceT
 {
 	xServiceT Base;
 
-	TemperatureServiceAdapterBaseT Adapter;
-
 	float Temperature;
 
 } TemperatureServiceT;

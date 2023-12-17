@@ -42,7 +42,7 @@ static void privateServicesEventListener(xServiceT* service, int selector, void*
 
 }
 //------------------------------------------------------------------------------
-static void privateRequestEventListener(xRequestControlT* control, int selector, xRequestT* request, ...)
+static void privateRequestEventListener(xRequestControlT* control, int selector, xRequestT* request, void* args[])
 {
 	CAN_LocalRequestT* extansion = (void*)request;
 	xDeviceT* device = xServiceGetDevice(extansion->Recipient);
@@ -57,14 +57,14 @@ static void privateRequestEventListener(xRequestControlT* control, int selector,
 	{
 		case GAPServiceRequestGetNumberOfServices:
 		{
-			adapter->Content.ServicesCount = *(uint32_t*)GetParameter(request, 1);
+			adapter->Content.ServicesCount = *(uint32_t*)args[0];
 			adapter->Content.TotalServiceNumber = 0;
 			adapter->Content.ServicesInitState = InitStateGetServices;
 			break;
 		}
 		case GAPServiceRequestGetService:
 		{
-			volatile CAN_LocalResponseGATGetServiceT responseContent = { .Value = *(uint32_t*)GetParameter(request, 1) };
+			volatile CAN_LocalResponseGATGetServiceT responseContent = { .Value = *(uint32_t*)args[0] };
 			adapter->Content.TotalServiceNumber++;
 			(void)responseContent;
 
@@ -111,6 +111,31 @@ static void privateRequestEventListener(xRequestControlT* control, int selector,
 static void privateHandler(xDeviceT* device)
 {
 	VirtualDeviceAdapterT* adapter = (VirtualDeviceAdapterT*)device->Adapter.Content;
+
+	xCircleBufferT* circleBuffer = xPortGetRxCircleBuffer(&CAN_Port);
+	while (circleBuffer && adapter->Content.RxPacketHandlerIndex != circleBuffer->TotalIndex)
+	{
+		CAN_LocalSegmentT* segment = xCircleBufferGetElement(circleBuffer, adapter->Content.RxPacketHandlerIndex);
+
+		xServiceListElementT* element = xListStartEnumeration((xListT*)&device->Services);
+
+		while (element)
+		{
+			xServiceT* service = element->Value;
+			
+			if (service->Adapter.Interface->EventListener)
+			{
+				service->Adapter.Interface->EventListener(service, xServiceAdapterEventRecieveData, 0, segment, NULL);
+			}
+
+			element = element->Next;
+		}
+
+		xListStopEnumeration((xListT*)&device->Services);
+
+		adapter->Content.RxPacketHandlerIndex++;
+		adapter->Content.RxPacketHandlerIndex &= circleBuffer->SizeMask;
+	}
 
 	uint32_t time = xSystemGetTime(NULL);
 	if (time - adapter->Content.OperationTimeStamp < adapter->Content.OperationTimeOut)

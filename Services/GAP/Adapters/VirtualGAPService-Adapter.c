@@ -46,48 +46,40 @@ static void privateNotificationHandler(GAPServiceT* service,
 	}
 }
 //------------------------------------------------------------------------------
+static void privateReceiver(GAPServiceT* service, VirtualGAPServiceAdapterT* adapter, CAN_LocalSegmentT* segment)
+{
+	if (segment->ExtensionIsEnabled)
+	{
+		switch((uint8_t)segment->ExtensionHeader.MessageType)
+		{
+			case CAN_LocalMessageTypeTransfer:
+			{
+				switch((uint8_t)segment->ExtensionHeader.PacketType)
+				{
+					/*case CAN_LocalTransferPacketTypeOpenTransfer:
+						privateOpenTransferHandler(service, adapter, segment);
+						break;*/
+				}
+				break;
+			}
+		}
+	}
+	else
+	{
+		switch((uint8_t)segment->Header.MessageType)
+		{
+			case CAN_LocalMessageTypeNotification:
+			{
+				privateNotificationHandler(service, adapter, segment);
+				break;
+			}
+		}
+	}
+}
+//------------------------------------------------------------------------------
 static void privateHandler(GAPServiceT* service)
 {
-	VirtualGAPServiceAdapterT* adapter = service->Base.Adapter.Content;
-	xPortT* port = xServiceGetPort((void*)service);
-
-	xCircleBufferT* circleBuffer = xPortGetRxCircleBuffer(port);
-
-	while (adapter->Internal.RxPacketHandlerIndex != circleBuffer->TotalIndex)
-	{
-		CAN_LocalSegmentT* segment = xCircleBufferGetElement(circleBuffer, adapter->Internal.RxPacketHandlerIndex);
-
-		if (segment->ExtensionIsEnabled)
-		{
-			switch((uint8_t)segment->ExtensionHeader.MessageType)
-			{
-				case CAN_LocalMessageTypeTransfer:
-				{
-					switch((uint8_t)segment->ExtensionHeader.PacketType)
-					{
-						/*case CAN_LocalTransferPacketTypeOpenTransfer:
-							privateOpenTransferHandler(service, adapter, segment);
-							break;*/
-					}
-					break;
-				}
-			}
-		}
-		else
-		{
-			switch((uint8_t)segment->Header.MessageType)
-			{
-				case CAN_LocalMessageTypeNotification:
-				{
-					privateNotificationHandler(service, adapter, segment);
-					break;
-				}
-			}
-		}
-
-		adapter->Internal.RxPacketHandlerIndex++;
-		adapter->Internal.RxPacketHandlerIndex &= circleBuffer->SizeMask;
-	}
+	
 }
 //------------------------------------------------------------------------------
 static xResult privateRequestListener(GAPServiceT* service, int selector, uint32_t mode, void* in, void* out)
@@ -120,13 +112,29 @@ static xResult privateRequestListener(GAPServiceT* service, int selector, uint32
 
 	return xResultAccept;
 }
+//------------------------------------------------------------------------------
+static void privateEventListener(GAPServiceT* service, int selector, uint32_t mode, void* in, void* out)
+{
+	switch (selector)
+	{
+		case xServiceAdapterEventRecieveData:
+		{
+			privateReceiver(service, service->Base.Adapter.Content, in);
+			break;
+		}
+		
+		default:
+			break;
+	}
+}
 //==============================================================================
 //initializations:
 
 static GAPServiceAdapterInterfaceT privateInterface =
 {
-	.Handler = (GAPServiceAdapterHandlerT)privateHandler,
-	.RequestListener = (GAPServiceAdapterRequestListenerT)privateRequestListener
+	.Handler = (xServiceAdapterHandlerT)privateHandler,
+	.RequestListener = (xServiceAdapterRequestListenerT)privateRequestListener,
+	.EventListener = (xServiceAdapterEventListenerT)privateEventListener,
 };
 //------------------------------------------------------------------------------
 xResult VirtualGAPServiceAdapterInit(GAPServiceT* service,

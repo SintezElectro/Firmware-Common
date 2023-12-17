@@ -29,7 +29,7 @@ xResult TemperatureServiceInit(TemperatureServiceT* service, TemperatureServiceI
 	service->Base.Base.Description = &privateObjectDescription;
 	service->Base.Info.Type = xServiceTypeTemperatureControl;
 
-	service->Base.Adapter.Interface = service->Adapter.Interface;
+	//service->Base.Adapter.Interface = service->Adapter.Interface;
 	//service->Base.Adapter.Description = nameof(TemperatureServiceT);
 
 	return xResultAccept;

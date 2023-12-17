@@ -64,7 +64,7 @@ static void privatePacketHandler(xRequestControlT* control, CAN_LocalRequestCont
 						if (request->Base.EventListener)
 						{
 							request->TransmitionTime = xSystemGetTime(NULL) - request->StartTime;
-							request->Base.EventListener(control, xRequestEventComlite, (void*)request, content.Data.Bytes);
+							request->Base.EventListener(control, xRequestEventComlite, (void*)request, (void*[]){ content.Data.Bytes });
 							request->Base.EventListener = NULL;
 						}
 
@@ -120,7 +120,7 @@ static void privateHandler(xRequestControlT* control)
 				if (request->Base.EventListener)
 				{
 					request->TransmitionTime = xSystemGetTime(NULL) - request->StartTime;
-					request->Base.EventListener(control, xRequestEventError, (void*)request);
+					request->Base.EventListener(control, xRequestEventError, (void*)request, NULL);
 					request->Base.EventListener = NULL;
 				}
 

@@ -34,23 +34,13 @@ typedef enum
 } RelayServiceAdapterRequestSelector;
 //------------------------------------------------------------------------------
 
-typedef void (*RelayServiceAdapterHandlerT) (struct RelayServiceT* service);
-typedef void (*RelayServiceAdapterEventListenerT) (struct RelayServiceT* service, RelayServiceAdapterEventSelector selector, void* arg);
-typedef xResult (*RelayServiceAdapterRequestListenerT) (struct RelayServiceT* service, RelayServiceAdapterRequestSelector selector, void* arg);
+typedef xServiceAdapterInterfaceT RelayServiceAdapterInterfaceT;
 //------------------------------------------------------------------------------
 
 typedef struct
 {
-	RelayServiceAdapterHandlerT Handler;
-	RelayServiceAdapterRequestListenerT RequestListener;
-
-} RelayServiceAdapterInterfaceT;
-//------------------------------------------------------------------------------
-
-typedef struct
-{
-	char* Description;
-	void* Content;
+	//char* Description;
+	//void* Content;
 
 	RelayServiceAdapterInterfaceT* Interface;
 

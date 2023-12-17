@@ -170,82 +170,45 @@ static void privateRequestHandler(TemperatureServiceT* service,
 	}
 }
 //------------------------------------------------------------------------------
-static void privateReceiver(TemperatureServiceT* service, TemperatureServiceAdapterT* adapter)
+static void privateReceiver(TemperatureServiceT* service, TemperatureServiceAdapterT* adapter, CAN_LocalSegmentT* segment)
 {
-	xCircleBufferT* circleBuffer = xPortGetRxCircleBuffer(adapter->Port);
-
-	while (adapter->Internal.RxPacketHandlerIndex != circleBuffer->TotalIndex)
+	if (segment->ExtensionIsEnabled)
 	{
-		CAN_LocalSegmentT* segment = xCircleBufferGetElement(circleBuffer, adapter->Internal.RxPacketHandlerIndex);
-
-		if (segment->ExtensionIsEnabled)
+		switch((uint8_t)segment->MessageType)
 		{
-			switch((uint8_t)segment->MessageType)
+			case CAN_LocalMessageTypeTransfer:
 			{
-				case CAN_LocalMessageTypeTransfer:
+				switch((uint8_t)segment->TransferHeader.PacketType)
 				{
-					switch((uint8_t)segment->TransferHeader.PacketType)
-					{
-						case CAN_LocalTransferPacketTypeOpenTransfer:
-							privateOpenTransferHandler(service, adapter, segment);
-							break;
-					}
-					break;
+					case CAN_LocalTransferPacketTypeOpenTransfer:
+						privateOpenTransferHandler(service, adapter, segment);
+						break;
 				}
-				case CAN_LocalMessageTypeRequest:
-				{
-					privateRequestHandler(service, adapter, segment);
-					break;
-				}
+				break;
+			}
+			case CAN_LocalMessageTypeRequest:
+			{
+				privateRequestHandler(service, adapter, segment);
+				break;
 			}
 		}
-		else
+	}
+	else
+	{
+		switch((uint8_t)segment->Header.MessageType)
 		{
-			switch((uint8_t)segment->Header.MessageType)
+			case CAN_LocalMessageTypeNotification:
 			{
-				case CAN_LocalMessageTypeNotification:
-				{
-					privateNotificationHandler(service, adapter, segment);
-					break;
-				}
+				privateNotificationHandler(service, adapter, segment);
+				break;
 			}
 		}
-
-		adapter->Internal.RxPacketHandlerIndex++;
-		adapter->Internal.RxPacketHandlerIndex &= circleBuffer->SizeMask;
 	}
 }
 //------------------------------------------------------------------------------
 static void privateHandler(TemperatureServiceT* service)
 {
-	TemperatureServiceAdapterT* adapter = service->Base.Adapter.Content;
-
-	uint32_t totalTime = xSystemGetTime(NULL);
-
-	if (totalTime - adapter->Internal.TimeStamp > 500)
-	{
-		/*adapter->Internal.TimeStamp = totalTime;
-
-		service->Temperature = 10.0f + (float)(rand() & 0x3fff) / 1000;
-
-		CAN_LocalTemperatureNotificationUpdateTemperatureT content;
-		content.Temperature = service->Temperature * 1000;
-		content.TimeStamp = totalTime;
-
-		CAN_LocalSegmentT segment;
-		segment.ExtensionHeader.IsEnabled = true;
-		segment.ExtensionHeader.MessageType = CAN_LocalMessageTypeNotification;
-		segment.ExtensionHeader.PacketType = CAN_LocalTemperatureNotificationUpdateTemperature;
-		segment.ExtensionHeader.ServiceId = service->Base.Id;
-		segment.ExtensionHeader.ServiceType = service->Base.Info.Type;
-
-		memcpy(segment.Data.Bytes, content.Data, sizeof(CAN_LocalTemperatureNotificationUpdateTemperatureT));
-		segment.DataLength = sizeof(CAN_LocalTemperatureNotificationUpdateTemperatureT);
-
-		xPortExtendedTransmition(adapter->Port, &segment);*/
-	}
-
-	privateReceiver(service, adapter);
+	
 }
 //------------------------------------------------------------------------------
 static xResult privateRequestListener(TemperatureServiceT* service, int selector, uint32_t mode, void* in, void* out)
@@ -269,6 +232,7 @@ static xResult privateRequestListener(TemperatureServiceT* service, int selector
 			asyncResult.ResultSize = sizeof(result);
 			break;
 		}
+		
 		/*case xServiceRequestSetId:
 		{
 			//xServiceRequestSetIdT* parameters = request->Parameters;
@@ -286,13 +250,29 @@ static xResult privateRequestListener(TemperatureServiceT* service, int selector
 
 	return xResultAccept;
 }
+//------------------------------------------------------------------------------
+static void privateEventListener(TemperatureServiceT* service, int selector, uint32_t mode, void* in, void* out)
+{
+	switch (selector)
+	{
+		case xServiceAdapterEventRecieveData:
+		{
+			privateReceiver(service, service->Base.Adapter.Content, in);
+			break;
+		}
+		
+		default:
+			break;
+	}
+}
 //==============================================================================
 //initializations:
 
 static TemperatureServiceAdapterInterfaceT privateInterface =
 {
 	.Handler = (xServiceAdapterHandlerT)privateHandler,
-	.RequestListener = (xServiceAdapterRequestListenerT)privateRequestListener
+	.RequestListener = (xServiceAdapterRequestListenerT)privateRequestListener,
+	.EventListener = (xServiceAdapterEventListenerT)privateEventListener,
 };
 //------------------------------------------------------------------------------
 xResult TemperatureServiceAdapterInit(TemperatureServiceT* service,
@@ -302,7 +282,7 @@ xResult TemperatureServiceAdapterInit(TemperatureServiceT* service,
 	if (service && init)
 	{
 		service->Base.Adapter.Content = adapter;
-		service->Adapter.Interface = &privateInterface;
+		service->Base.Adapter.Interface = &privateInterface;
 		//service->Adapter.Description = nameof(TemperatureServiceAdapterT);
 
 		adapter->Port = init->Port;

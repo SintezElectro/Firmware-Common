@@ -101,59 +101,50 @@ static void privateExtensionBroadcastHandler(TemperatureServiceT* service,
 	}
 }
 //------------------------------------------------------------------------------
+static void privateReceiver(TemperatureServiceT* service, VirtualTemperatureServiceAdapterT* adapter, CAN_LocalSegmentT* segment)
+{
+	if (segment->ExtensionIsEnabled)
+	{
+		switch((uint8_t)segment->ExtensionHeader.MessageType)
+		{
+			case CAN_LocalMessageTypeTransfer:
+			{
+				switch((uint8_t)segment->ExtensionHeader.PacketType)
+				{
+					/*case CAN_LocalTransferPacketTypeOpenTransfer:
+						privateOpenTransferHandler(service, adapter, segment);
+						break;*/
+				}
+				break;
+			}
+			case CAN_LocalMessageTypeNotification:
+			{
+				privateExtensionNotificationHandler(service, adapter, segment);
+				break;
+			}
+			case CAN_LocalMessageTypeBroadcast:
+			{
+				privateExtensionBroadcastHandler(service, adapter, segment);
+				break;
+			}
+		}
+	}
+	else
+	{
+		switch((uint8_t)segment->Header.MessageType)
+		{
+			case CAN_LocalMessageTypeNotification:
+			{
+				privateNotificationHandler(service, adapter, segment);
+				break;
+			}
+		}
+	}
+}
+//------------------------------------------------------------------------------
 static void privateHandler(TemperatureServiceT* service)
 {
-	VirtualTemperatureServiceAdapterT* adapter = service->Base.Adapter.Content;
-	xPortT* port = xServiceGetPort((void*)service);
-
-	xCircleBufferT* circleBuffer = xPortGetRxCircleBuffer(port);
-	TemperatureServiceTotalTime = xSystemGetTime(NULL);
-
-	while (adapter->Internal.RxPacketHandlerIndex != circleBuffer->TotalIndex)
-	{
-		CAN_LocalSegmentT* segment = xCircleBufferGetElement(circleBuffer, adapter->Internal.RxPacketHandlerIndex);
-
-		if (segment->ExtensionIsEnabled)
-		{
-			switch((uint8_t)segment->ExtensionHeader.MessageType)
-			{
-				case CAN_LocalMessageTypeTransfer:
-				{
-					switch((uint8_t)segment->ExtensionHeader.PacketType)
-					{
-						/*case CAN_LocalTransferPacketTypeOpenTransfer:
-							privateOpenTransferHandler(service, adapter, segment);
-							break;*/
-					}
-					break;
-				}
-				case CAN_LocalMessageTypeNotification:
-				{
-					privateExtensionNotificationHandler(service, adapter, segment);
-					break;
-				}
-				case CAN_LocalMessageTypeBroadcast:
-				{
-					privateExtensionBroadcastHandler(service, adapter, segment);
-					break;
-				}
-			}
-		}
-		else
-		{
-			switch((uint8_t)segment->Header.MessageType)
-			{
-				case CAN_LocalMessageTypeNotification:
-				{
-					privateNotificationHandler(service, adapter, segment);
-					break;
-				}
-			}
-		}
-
-		adapter->Internal.RxPacketHandlerIndex++;
-		adapter->Internal.RxPacketHandlerIndex &= circleBuffer->SizeMask;
-	}
+	
 }
 //------------------------------------------------------------------------------
 static xResult privateRequestListener(TemperatureServiceT* service, int selector, uint32_t mode, void* in, void* out)
@@ -177,13 +168,29 @@ static xResult privateRequestListener(TemperatureServiceT* service, int selector
 
 	return xResultAccept;
 }
+//------------------------------------------------------------------------------
+static void privateEventListener(TemperatureServiceT* service, int selector, uint32_t mode, void* in, void* out)
+{
+	switch (selector)
+	{
+		case xServiceAdapterEventRecieveData:
+		{
+			privateReceiver(service, service->Base.Adapter.Content, in);
+			break;
+		}
+
+		default:
+			break;
+	}
+}
 //==============================================================================
 //initializations:
 
 static TemperatureServiceAdapterInterfaceT privateInterface =
 {
 	.Handler = (xServiceAdapterHandlerT)privateHandler,
-	.RequestListener = (xServiceAdapterRequestListenerT)privateRequestListener
+	.RequestListener = (xServiceAdapterRequestListenerT)privateRequestListener,
+	.EventListener = (xServiceAdapterEventListenerT)privateEventListener,
 };
 //------------------------------------------------------------------------------
 xResult VirtualTemperatureServiceAdapterInit(TemperatureServiceT* service,
@@ -191,7 +198,7 @@ xResult VirtualTemperatureServiceAdapterInit(TemperatureServiceT* service,
 		VirtualTemperatureServiceAdapterInitT* init)
 {
 	service->Base.Adapter.Content = adapter;
-	service->Adapter.Interface = &privateInterface;
+	service->Base.Adapter.Interface = &privateInterface;
 	//service->Adapter.Description = nameof(VirtualTemperatureServiceAdapterT);
 
 	service->Base.IsEnable = true;

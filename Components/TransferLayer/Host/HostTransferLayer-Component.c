@@ -53,8 +53,6 @@ void HostTransferLayerComponentHandler()
 {
 	xTransferLayerHandlerDirect(HostTransferLayer);
 
-	//return;
-
 	uint32_t time = xSystemGetTime(NULL);
 	if (time - privateTimeStamp > 2000)
 	{

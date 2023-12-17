@@ -33,22 +33,12 @@ typedef enum
 } GAPServiceAdapterRequestSelector;
 //------------------------------------------------------------------------------
 
-typedef void (*GAPServiceAdapterHandlerT) (struct GAPServiceT* service);
-typedef void (*GAPServiceAdapterEventListenerT) (struct GAPServiceT* service, GAPServiceAdapterEventSelector selector, void* arg);
-typedef xResult (*GAPServiceAdapterRequestListenerT) (struct GAPServiceT* service, GAPServiceAdapterRequestSelector selector, void* arg);
+typedef xServiceAdapterInterfaceT GAPServiceAdapterInterfaceT;
 //------------------------------------------------------------------------------
 
 typedef struct
 {
-	GAPServiceAdapterHandlerT Handler;
-	GAPServiceAdapterRequestListenerT RequestListener;
-
-} GAPServiceAdapterInterfaceT;
-//------------------------------------------------------------------------------
-
-typedef struct
-{
-	GAPServiceAdapterInterfaceT* Interface;
+	void* Content;
 
 } GAPServiceAdapterBaseT;
 

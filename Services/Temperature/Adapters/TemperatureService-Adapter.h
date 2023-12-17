@@ -21,8 +21,6 @@ typedef struct
 {
 	uint32_t TimeStamp;
 
-	uint16_t RxPacketHandlerIndex;
-
 } TemperatureServiceAdapterInternalT;
 //------------------------------------------------------------------------------
 

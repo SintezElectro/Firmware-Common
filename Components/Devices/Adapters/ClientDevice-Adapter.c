@@ -36,9 +36,27 @@ static void PrivateHandler(xDeviceT* device)
 			{
 				device->NetworkState = xDeviceNetworkStateRegistered;
 				xDeviceSetId(device, characteristic.Id);
+				goto end;
 			}
 		}
+		
+		xServiceListElementT* element = xListStartEnumeration((xListT*)&device->Services);
 
+		while (element)
+		{
+			xServiceT* service = element->Value;
+			
+			if (service->Adapter.Interface->EventListener)
+			{
+				service->Adapter.Interface->EventListener(service, xServiceAdapterEventRecieveData, 0, segment, NULL);
+			}
+
+			element = element->Next;
+		}
+
+		xListStopEnumeration((xListT*)&device->Services);
+
+		end:;
 		adapter->Content.RxPacketHandlerIndex++;
 		adapter->Content.RxPacketHandlerIndex &= adapter->Content.PortRxCircleBuffer->SizeMask;
 	}
