@@ -14,6 +14,7 @@ extern "C" {
 #include "Device1-ComponentConfig.h"
 #include "Abstractions/xDevice/xDevice.h"
 #include "Services/Temperature/TemperatureService.h"
+#include "Services/GAP/GAPService.h"
 //==============================================================================
 //defines:
 
@@ -37,6 +38,7 @@ void Device1ComponentTimeSynchronization();
 //export:
 
 extern xDeviceT Device1;
+extern GAPServiceT Device1GAP;
 extern TemperatureServiceT TemperatureService3;
 extern TemperatureServiceT TemperatureService4;
 //==============================================================================
