@@ -21,7 +21,7 @@
 //==============================================================================
 //variables:
 
-static CAN_LocalTransferT CAN_LocalTransfersBuffer[LOCAL_TRANSFER_LAYER_BUFFER_SIZE];
+static CAN_LocalTransferT CAN_LocalTransfersBuffer[LOCAL_TRANSFER_LAYER_BUFFER_SIZE] LOCAL_TRANSFER_LAYER_BUFFER_MEM_SECTION;
 
 xTransferLayerT LocalTransferLayer;
 //==============================================================================

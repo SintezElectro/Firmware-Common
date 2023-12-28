@@ -3,7 +3,7 @@
 
 #include "VirtualServiceCommonRequests-Config.h"
 #include "CAN_Local-Types.h"
-#include "VirtualServiceCommonRequests.h"
+#include "VirtualServiceCommon.h"
 #include "Components/RequestControl/Host/HostRequestControl-Component.h"
 #include "Components/Devices/Host/HostDevice-Component.h"
 #include "Common/xMemory.h"
@@ -22,8 +22,9 @@
 //==============================================================================
 //functions:
 
-static void privateRequestEventListener(xRequestControlT* control, int selector, xRequestT* request, ...)
+static void privateRequestEventListener(xRequestControlT* control, int selector, uint32_t description, void* args[])
 {
+	xRequestT* request = args[0];
 	xIAsyncRequestT* asyncRequest = request->Content;
 
 	if (!asyncRequest)
@@ -33,7 +34,6 @@ static void privateRequestEventListener(xRequestControlT* control, int selector,
 
 	xIAsyncResultT asyncResult = { 0 };
 	asyncResult.Holder = asyncRequest->Holder;
-	asyncResult.Operation = selector;
 	asyncResult.OperationResult = request->Result;
 	asyncResult.Content = asyncRequest->Content;
 

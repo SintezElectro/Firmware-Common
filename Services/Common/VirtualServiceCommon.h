@@ -1,8 +1,8 @@
 //==============================================================================
 //header:
 
-#ifndef _VIRTUAL_SERVICE_COMMON_REQUESTS_
-#define _VIRTUAL_SERVICE_COMMON_REQUESTS_
+#ifndef _VIRTUAL_SERVICE_COMMON_
+#define _VIRTUAL_SERVICE_COMMON_
 //------------------------------------------------------------------------------
 #ifdef __cplusplus
 extern "C" {
@@ -39,4 +39,4 @@ xResult VirtualServiceRequestSetParameter(xServiceT* sender,
 }
 #endif
 //------------------------------------------------------------------------------
-#endif //_VIRTUAL_SERVICE_COMMON_REQUESTS_
+#endif //_VIRTUAL_SERVICE_COMMON_

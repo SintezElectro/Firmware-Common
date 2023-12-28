@@ -207,7 +207,11 @@ static void privateTranferHandler(xTransferLayerT* layer,
 
 				if (transfer->EventListener)
 				{
-					transfer->EventListener(layer, transfer, xTransferEventError, NULL);
+					transfer->EventListener(layer,
+							transfer,
+							xTransferEventError,
+							0,
+							NULL);
 				}
 			}
 		}
@@ -329,7 +333,11 @@ static void privateTranferHandler(xTransferLayerT* layer,
 				transfer->IsRunning = false;
 				transfer->TransmissionTime = xSystemGetTime(NULL) - transfer->Internal.StartTransmissionTimeStamp;
 
-				transfer->EventListener(layer, transfer, xTransferEventComplite, NULL);
+				transfer->EventListener(layer,
+						transfer,
+						xTransferEventComplite,
+						0,
+						NULL);
 				break;
 			}
 
@@ -394,11 +402,18 @@ static void privateHandler(xTransferLayerT* manager)
 	privateTranferHandler(manager, adapter);
 }
 //------------------------------------------------------------------------------
-static xResult privateRequestAdd(xTransferLayerT* manager, TransferLayerAdapterT* adapter, xTransferT* transfer)
+static xResult privateRequestAdd(xTransferLayerT* manager,
+		TransferLayerAdapterT* adapter,
+		uint32_t description,
+		void* args[])
 {
 #ifdef INC_FREERTOS_H
 	xSemaphoreTake(adapter->Content.CoreMutex, portMAX_DELAY);
 #endif
+
+	xTransferT* transfer = args[0];
+	uint32_t action = (uint32_t)args[1];
+
 	if (transfer->State == xTransferStateIdle || transfer->State == xTransferStatePreparing)
 	{
 		transfer->IsRunning = true;
@@ -414,11 +429,13 @@ static xResult privateRequestAdd(xTransferLayerT* manager, TransferLayerAdapterT
 
 			xServiceT* holder = transfer->Holder;
 			CAN_LocalTransferT* extansion = (void*)transfer;
+			extansion->Action = action;
 
 			CAN_LocalRequestContentOpenTransferT content;
 			content.ServiceId = transfer->Id;
-			content.Action = extansion->Action;
+			content.Action = action;
 			content.Type = transfer->Type;
+			content.ContantSize = transfer->DataLength;
 			content.ValidationIsEnabled = transfer->ValidationIsEnabled;
 
 			CAN_LocalSegmentT packet;
@@ -453,7 +470,11 @@ static xResult privateRequestAdd(xTransferLayerT* manager, TransferLayerAdapterT
 	return xResultBusy;
 }
 //------------------------------------------------------------------------------
-static xResult privateRequestListener(xTransferLayerT* manager, xTransferLayerAdapterRequestSelector selector, void* arg, ...)
+static xResult privateRequestListener(xTransferLayerT* manager,
+		xTransferLayerAdapterRequestSelector selector,
+		uint32_t description,
+		void* in,
+		void* out)
 {
 	TransferLayerAdapterT* adapter = (TransferLayerAdapterT*)manager->Adapter.Content;
 
@@ -472,7 +493,7 @@ static xResult privateRequestListener(xTransferLayerT* manager, xTransferLayerAd
 			break;
 
 		case xTransferLayerAdapterRequestAdd:
-			privateRequestAdd(manager, adapter, arg);
+			privateRequestAdd(manager, adapter, description, in);
 			break;
 
 

@@ -25,13 +25,6 @@ typedef struct
 } RequestGetTemperatureT;
 //------------------------------------------------------------------------------
 
-typedef struct
-{
-	xRxTransactionContentT Content;
-
-	xPortT* Port;
-
-} xAsyncRequestContentT;
 //==============================================================================
 //variables:
 

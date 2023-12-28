@@ -1,7 +1,7 @@
 //==============================================================================
 //header:
 
-#ifndef _LOCAL_TRANSFER_LAYER_COMPONENT_H_
+#if !defined(_LOCAL_TRANSFER_LAYER_COMPONENT_H_)
 #define _LOCAL_TRANSFER_LAYER_COMPONENT_H_
 //------------------------------------------------------------------------------
 #ifdef __cplusplus

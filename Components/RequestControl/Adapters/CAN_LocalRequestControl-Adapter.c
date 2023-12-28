@@ -5,6 +5,8 @@
 #include "Abstractions/xSystem/xSystem.h"
 #include "Abstractions/xDevice/xService-Types.h"
 #include "Common/xCircleBuffer.h"
+#include "RequestControl-ComponentConfig.h"
+#include "Services/Common/ServiceCommon.h"
 //==============================================================================
 //defines:
 
@@ -21,8 +23,12 @@
 //==============================================================================
 //prototypes:
 
-static xResult privateRequestListener(xRequestControlT* control, xRequestControlAdapterRequestSelector selector, void* arg, ...);
-static xResult privateRequestPrepare(xRequestControlT* control, CAN_LocalRequestControlAdapterT* adapter, void* arg[]);
+static xResult privateRequestListener(xRequestControlT* control,
+		xRequestControlAdapterRequestSelector selector,
+		uint32_t description,
+		void* arg);
+
+//static xResult privateRequestPrepare(xRequestControlT* control, CAN_LocalRequestControlAdapterT* adapter, void* arg[]);
 //==============================================================================
 //functions:
 
@@ -40,7 +46,8 @@ static void privatePacketHandler(xRequestControlT* control, CAN_LocalRequestCont
 
 		CAN_LocalSegmentT* segment = xCircleBufferGetElement(circleBuffer, adapter->Content.RxPacketHandlerIndex);
 
-		if (segment->ExtensionHeader.IsEnabled && segment->ExtensionHeader.MessageType == CAN_LocalMessageTypeResponse)
+		if (segment->ExtensionHeader.IsEnabled
+		&& segment->ExtensionHeader.MessageType == CAN_LocalMessageTypeResponse)
 		{
 			xRequestListElementT* element = control->ProcessedRequests.Head;
 
@@ -64,7 +71,7 @@ static void privatePacketHandler(xRequestControlT* control, CAN_LocalRequestCont
 						if (request->Base.EventListener)
 						{
 							request->TransmitionTime = xSystemGetTime(NULL) - request->StartTime;
-							request->Base.EventListener(control, xRequestEventComlite, (void*)request, (void*[]){ content.Data.Bytes });
+							request->Base.EventListener(control, xRequestEventComlite, 0, (void*[]){ request, content.Data.Bytes });
 							request->Base.EventListener = NULL;
 						}
 
@@ -120,7 +127,7 @@ static void privateHandler(xRequestControlT* control)
 				if (request->Base.EventListener)
 				{
 					request->TransmitionTime = xSystemGetTime(NULL) - request->StartTime;
-					request->Base.EventListener(control, xRequestEventError, (void*)request, NULL);
+					request->Base.EventListener(control, xRequestEventError, 0, (void*[]){ request, NULL });
 					request->Base.EventListener = NULL;
 				}
 
@@ -179,73 +186,38 @@ static xResult privateRequestAdd(xRequestControlT* control, CAN_LocalRequestCont
 	return xResultAccept;
 }
 //------------------------------------------------------------------------------
-static xResult privateRequestPrepare(xRequestControlT* control, CAN_LocalRequestControlAdapterT* adapter, void* arg[])
+static xResult privateRequestAddEx1(xRequestControlT* control,
+		CAN_LocalRequestControlAdapterT* adapter,
+		CAN_LocalRequestAddEx1T* request)
 {
-	void** result = arg[0];
-	void** params = arg[1];
-
-	xServiceT* sender = params[0];
-	uint8_t messageType = (uint32_t)params[1];
-	uint8_t packetType = (uint32_t)params[2];
-
-	uint8_t* data = params[3];
-	int dataLength = (int)params[4];
+	xServiceT* sender = request->Service;
 
 	CAN_LocalRequestT* newRequest = NULL;
-	privateRequestListener(control, xRequestControlAdapterRequestNew, &newRequest);
+	privateRequestListener(control, xRequestControlAdapterRequestNew, 0, &newRequest);
 
 	if (newRequest)
 	{
 		newRequest->Base.Sender = sender;
 		newRequest->Segment.ExtensionHeader.IsEnabled = true;
-		newRequest->Segment.ExtensionHeader.MessageType = messageType;
-		newRequest->Segment.ExtensionHeader.PacketType = packetType;
+		newRequest->Segment.ExtensionHeader.MessageType = request->MessageType;
+		newRequest->Segment.ExtensionHeader.PacketType = request->PacketType;
 		newRequest->Segment.ExtensionHeader.ServiceId = sender->Id;
 		newRequest->Segment.ExtensionHeader.ServiceType = sender->Info.Type;
-		newRequest->Segment.DataLength = dataLength;
+		newRequest->Segment.DataLength = request->ContentSize;
 
-		switch (messageType)
-		{
-			case CAN_LocalMessageTypeBroadcast:
-			{
-				memcpy(newRequest->Segment.Data.Bytes, data, dataLength);
-			}
-		}
+		memcpy(newRequest->Segment.Data.Bytes, request->Content, request->ContentSize);
 
 		xListAdd((void*)&control->ProcessedRequests, newRequest);
 		xPortExtendedTransmition(adapter->Port, &newRequest->Segment);
 	}
 
-	//*result = newRequest;
-
-	/*CAN_LocalRequestT* request = NULL;
-	privateRequestListener(control, xRequestControlAdapterRequestNew, &request);
-
-	if (request)
-	{
-
-	}
-
-	CAN_LocalSegmentT* segment = GetParameter(type, 1);
-
-	request->
-
-	request->TxData = extansion->Data.Bytes;
-	request->RxData = 0;
-	request->RxDataSize = 0;
-
-	extansion->StartTime = xSystemGetTime(NULL);
-
-	xListAdd((void*)&control->ProcessedRequests, request);
-	xPortExtendedTransmition(adapter->Port, &segment);
-
-	xListAdd((void*)&control->ProcessedRequests, request);
-	xPortExtendedTransmition(adapter->Port, &extansion->Segment);*/
-
 	return xResultAccept;
 }
 //------------------------------------------------------------------------------
-static xResult privateRequestListener(xRequestControlT* control, xRequestControlAdapterRequestSelector selector, void* arg, ...)
+static xResult privateRequestListener(xRequestControlT* control,
+		xRequestControlAdapterRequestSelector selector,
+		uint32_t description,
+		void* arg)
 {
 	CAN_LocalRequestControlAdapterT* adapter = (CAN_LocalRequestControlAdapterT*)control->Adapter.Content;
 
@@ -264,12 +236,14 @@ static xResult privateRequestListener(xRequestControlT* control, xRequestControl
 			break;
 
 		case xRequestControlAdapterRequestAdd:
-			privateRequestAdd(control, adapter, arg);
-			break;
-
-		case xRequestControlAdapterRequestPrepare:
-			privateRequestPrepare(control, adapter, &arg);
-			break;
+		{
+			switch (description)
+			{
+				case 0: return privateRequestAdd(control, adapter, arg);
+				case 1: return privateRequestAddEx1(control, adapter, arg);
+			}
+			return xResultInvalidRequest;
+		}
 
 		case xRequestControlAdapterRequestNew:
 		{

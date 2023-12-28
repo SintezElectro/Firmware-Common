@@ -1,6 +1,7 @@
 //==============================================================================
 //includes:
 
+#include "../Common/DeviceCommon.h"
 #include "Common/xMemory.h"
 #include "VirtualDevice-Adapter.h"
 //#include "Components/TransferLayer/TransferLayer-Component.h"
@@ -42,9 +43,12 @@ static void privateServicesEventListener(xServiceT* service, int selector, void*
 
 }
 //------------------------------------------------------------------------------
-static void privateRequestEventListener(xRequestControlT* control, int selector, xRequestT* request, void* args[])
+static void privateRequestEventListener(xRequestControlT* control,
+		int selector,
+		uint32_t description,
+		void* args[])
 {
-	CAN_LocalRequestT* extansion = (void*)request;
+	CAN_LocalRequestT* extansion = (void*)args[0];
 	xDeviceT* device = xServiceGetDevice(extansion->Recipient);
 	VirtualDeviceAdapterT* adapter = (VirtualDeviceAdapterT*)device->Adapter.Content;
 
@@ -57,14 +61,15 @@ static void privateRequestEventListener(xRequestControlT* control, int selector,
 	{
 		case GAPServiceRequestGetNumberOfServices:
 		{
-			adapter->Content.ServicesCount = *(uint32_t*)args[0];
+			adapter->Content.ServicesCount = *(uint32_t*)args[1];
 			adapter->Content.TotalServiceNumber = 0;
 			adapter->Content.ServicesInitState = InitStateGetServices;
 			break;
 		}
+
 		case GAPServiceRequestGetService:
 		{
-			volatile CAN_LocalResponseGATGetServiceT responseContent = { .Value = *(uint32_t*)args[0] };
+			volatile CAN_LocalResponseGATGetServiceT responseContent = { .Value = *(uint32_t*)args[1] };
 			adapter->Content.TotalServiceNumber++;
 			(void)responseContent;
 
@@ -112,31 +117,6 @@ static void privateHandler(xDeviceT* device)
 {
 	VirtualDeviceAdapterT* adapter = (VirtualDeviceAdapterT*)device->Adapter.Content;
 
-	xCircleBufferT* circleBuffer = xPortGetRxCircleBuffer(&CAN_Port);
-	while (circleBuffer && adapter->Content.RxPacketHandlerIndex != circleBuffer->TotalIndex)
-	{
-		CAN_LocalSegmentT* segment = xCircleBufferGetElement(circleBuffer, adapter->Content.RxPacketHandlerIndex);
-
-		xServiceListElementT* element = xListStartEnumeration((xListT*)&device->Services);
-
-		while (element)
-		{
-			xServiceT* service = element->Value;
-			
-			if (service->Adapter.Interface->EventListener)
-			{
-				service->Adapter.Interface->EventListener(service, xServiceAdapterEventRecieveData, 0, segment, NULL);
-			}
-
-			element = element->Next;
-		}
-
-		xListStopEnumeration((xListT*)&device->Services);
-
-		adapter->Content.RxPacketHandlerIndex++;
-		adapter->Content.RxPacketHandlerIndex &= circleBuffer->SizeMask;
-	}
-
 	uint32_t time = xSystemGetTime(NULL);
 	if (time - adapter->Content.OperationTimeStamp < adapter->Content.OperationTimeOut)
 	{
@@ -183,12 +163,18 @@ static void privateHandler(xDeviceT* device)
 			}
 
 			adapter->Content.ServicesInitState = InitStateComplite;
+
+			device->EventListener((void*)device, xDeviceEventSynchronizationComplite, 0, NULL);
 			break;
 		}
 	}
 }
 //------------------------------------------------------------------------------
-static xResult PrivateRequestListener(xDeviceT* device, xDeviceAdapterRequestSelector selector, uint32_t mode, void* in, void* out)
+static xResult PrivateRequestListener(xDeviceT* device,
+		xDeviceAdapterRequestSelector selector,
+		uint32_t mode,
+		void* in,
+		void* out)
 {
 	//VirtualDeviceAdapterT* adapter = (VirtualDeviceAdapterT*)device->Adapter.Content;
 
@@ -219,16 +205,29 @@ static xResult PrivateRequestListener(xDeviceT* device, xDeviceAdapterRequestSel
 	return xResultAccept;
 }
 //------------------------------------------------------------------------------
-static void PrivateEventListener(xDeviceT* device, xDeviceAdapterEventSelector selector, void* arg)
+static void PrivateEventListener(xDeviceT* device,
+		xDeviceAdapterEventSelector selector,
+		uint32_t description,
+		void* in,
+		void* out)
 {
 	VirtualDeviceAdapterT* adapter = (VirtualDeviceAdapterT*)device->Adapter.Content;
 
 	switch((int)selector)
 	{
 		case xDeviceAdapterEventDeviceInit:
+		{
 			adapter->Content.GAP.Base.Id = device->Id;
 
 			break;
+		}
+
+		case xDeviceAdapterEventRecieveData:
+		{
+			uint8_t isPersonal = DeviceReceiveData(device, in) == xResultAccept;
+			*(uint8_t*)out = isPersonal;
+			break;
+		}
 
 		default: return;
 	}

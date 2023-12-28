@@ -18,8 +18,6 @@
 //==============================================================================
 //defines:
 
-#define TASK_STACK_SIZE 0x100
-
 #define LOCAL_DEVICE_ID 2000
 #define TEMPERATURE_SERVICE1_ID 22
 #define TEMPERATURE_SERVICE2_ID 23
@@ -32,20 +30,20 @@
 //==============================================================================
 //variables:
 
-static TaskHandle_t taskHandle;
-static StaticTask_t taskBuffer;
-static StackType_t taskStack[TASK_STACK_SIZE];
+static TaskHandle_t taskHandle HOST_DEVICE_MAIN_TASK_STACK_SECTION;
+static StaticTask_t taskBuffer HOST_DEVICE_MAIN_TASK_STACK_SECTION;
+static StackType_t taskStack[HOST_DEVICE_MAIN_TASK_STACK_SIZE] HOST_DEVICE_MAIN_TASK_STACK_SECTION;
 
 int RTOS_HostDeviceComponentTaskStackWaterMark;
 
-GAPServiceT HostGAP;
+GAPServiceT HostGAP HOST_DEVICE_LOCAL_SERVICES_MEM_SECTION;
 
-static TemperatureServiceT TemperatureService1;
-static TemperatureServiceT TemperatureService2;
+static TemperatureServiceT TemperatureService1 HOST_DEVICE_LOCAL_SERVICES_MEM_SECTION;
+static TemperatureServiceT TemperatureService2 HOST_DEVICE_LOCAL_SERVICES_MEM_SECTION;
 
-RelayServiceT RelayService;
+RelayServiceT RelayService HOST_DEVICE_LOCAL_SERVICES_MEM_SECTION;
 
-xDeviceT HostDevice;
+xDeviceT HostDevice HOST_DEVICE_MEM_SECTION;
 //==============================================================================
 //functions:
 
@@ -57,10 +55,11 @@ static void privateServiceEventListener(xServiceT* service, xServiceAdapterEvent
 	}
 }
 //------------------------------------------------------------------------------
-static void privateDeviceEventListener(xDeviceT* object, xDeviceEventSelector selector, void* arg)
+static void privateDeviceEventListener(xDeviceT* object, xDeviceEventSelector selector, uint32_t description, void* arg)
 {
 	switch ((int)selector)
 	{
+
 		default: break;
 	}
 }
@@ -109,14 +108,14 @@ void HostDeviceComponentTimeSynchronization()
 //==============================================================================
 //initializations:
 
-static HostDeviceAdapterT privateHostDeviceAdapter;
+static HostDeviceAdapterT privateHostDeviceAdapter HOST_DEVICE_MEM_SECTION;
 
-static TemperatureServiceAdapterT privateTemperatureServiceAdapter1;
-static TemperatureServiceAdapterT privateTemperatureServiceAdapter2;
+static TemperatureServiceAdapterT privateTemperatureServiceAdapter1 HOST_DEVICE_LOCAL_SERVICES_MEM_SECTION;
+static TemperatureServiceAdapterT privateTemperatureServiceAdapter2 HOST_DEVICE_LOCAL_SERVICES_MEM_SECTION;
 
-static GAPServiceAdapterT privateGAPServiceAdapter;
+static GAPServiceAdapterT privateGAPServiceAdapter HOST_DEVICE_LOCAL_SERVICES_MEM_SECTION;
 
-static RelayServiceAdapterT privateRelayServiceAdapter1;
+static RelayServiceAdapterT privateRelayServiceAdapter1 HOST_DEVICE_LOCAL_SERVICES_MEM_SECTION;
 //------------------------------------------------------------------------------
 static xTerminalObjectT privateServiceTerminalObject =
 {
@@ -224,7 +223,7 @@ xResult HostDeviceComponentInit(void* parent)
 	taskHandle =
 				xTaskCreateStatic(privateTask, // Function that implements the task.
 									"device control task", // Text name for the task.
-									TASK_STACK_SIZE, // Number of indexes in the xStack array.
+									HOST_DEVICE_MAIN_TASK_STACK_SIZE, // Number of indexes in the xStack array.
 									NULL, // Parameter passed into the task.
 									osPriorityNormal, // Priority at which the task is created.
 									taskStack, // Array to use as the task's stack.

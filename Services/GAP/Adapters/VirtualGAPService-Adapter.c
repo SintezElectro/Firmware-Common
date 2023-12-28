@@ -1,7 +1,7 @@
 //==============================================================================
 //includes:
 
-#include <stdlib.h>
+#include "Services/Common/ServiceCommon.h"
 #include "Common/xCircleBuffer.h"
 #include "VirtualGAPService-Adapter.h"
 #include "Abstractions/xSystem/xSystem.h"
@@ -18,63 +18,18 @@
 //==============================================================================
 //variables:
 
-
+static const ServiceReceiverInterfaceT privateReceiverInterface;
 //==============================================================================
 //functions:
 
-static void privateNotificationHandler(GAPServiceT* service,
-		VirtualGAPServiceAdapterT* adapter,
-		CAN_LocalSegmentT* segment)
+static xResult privateNotificationReceiver(xServiceT* service,
+		xPortT* port,
+		CAN_LocalSegmentT* segment,
+		CAN_LocalBaseEventPacketT content)
 {
-	CAN_LocalBaseEventPacketT content = { .Value = segment->Data.DoubleWord };
+	ServiceSendToSubscribers(service, 0, 0, NULL);
 
-	if (segment->Header.ServiceType == service->Base.Info.Type && content.Id == service->Base.Id)
-	{
-		xServiceSubscriberListElementT* element = service->Base.Subscribers.Head;
-
-		while (element)
-		{
-			xServiceSubscriberT* subscriber = element->Value;
-
-			if (subscriber->EventListener)
-			{
-				subscriber->EventListener((void*)service, subscriber, 0, &content.Content);
-			}
-
-			element = element->Next;
-		}
-	}
-}
-//------------------------------------------------------------------------------
-static void privateReceiver(GAPServiceT* service, VirtualGAPServiceAdapterT* adapter, CAN_LocalSegmentT* segment)
-{
-	if (segment->ExtensionIsEnabled)
-	{
-		switch((uint8_t)segment->ExtensionHeader.MessageType)
-		{
-			case CAN_LocalMessageTypeTransfer:
-			{
-				switch((uint8_t)segment->ExtensionHeader.PacketType)
-				{
-					/*case CAN_LocalTransferPacketTypeOpenTransfer:
-						privateOpenTransferHandler(service, adapter, segment);
-						break;*/
-				}
-				break;
-			}
-		}
-	}
-	else
-	{
-		switch((uint8_t)segment->Header.MessageType)
-		{
-			case CAN_LocalMessageTypeNotification:
-			{
-				privateNotificationHandler(service, adapter, segment);
-				break;
-			}
-		}
-	}
+	return xResultAccept;
 }
 //------------------------------------------------------------------------------
 static void privateHandler(GAPServiceT* service)
@@ -88,26 +43,11 @@ static xResult privateRequestListener(GAPServiceT* service, int selector, uint32
 	{
 		case xServiceRequestSetId:
 		{
-			/*xServiceRequestSetIdT* parameters = GetParameter(arg, 1);
 
-			CAN_LocalRequestContentServiceSetIdT requestContent;
-			requestContent.ServiceId = parameters->ServiceId;
-			requestContent.NewServiceId = parameters->NewId;
-
-			CAN_LocalRequestT* request = xRequestNew(&HostRequestControl);
-			request->Base.Sender = (void*)&HostGAP;
-			request->Action = xServiceRequestSetId;
-			request->Recipient = (void*)service;
-
-			request->Data.Value = requestContent.Value;
-			request->Base.TxDataSize = sizeof(CAN_LocalRequestContentServiceSetIdT);
-
-			xRequestControlAdd(&HostRequestControl, (void*)request);
-			VirtualServiceRequestSetId();*/
 			break;
 		}
 
-		default : return xResultRequestIsNotFound;
+		default : return xResultNotIdentified;
 	}
 
 	return xResultAccept;
@@ -119,7 +59,12 @@ static void privateEventListener(GAPServiceT* service, int selector, uint32_t mo
 	{
 		case xServiceAdapterEventRecieveData:
 		{
-			privateReceiver(service, service->Base.Adapter.Content, in);
+			uint8_t isPersonal = ServicePacketReceiver((void*)service,
+					NULL,
+					&privateReceiverInterface,
+					in) == xResultAccept;
+
+			*(uint8_t*)out = isPersonal;
 			break;
 		}
 		
@@ -137,6 +82,11 @@ static GAPServiceAdapterInterfaceT privateInterface =
 	.EventListener = (xServiceAdapterEventListenerT)privateEventListener,
 };
 //------------------------------------------------------------------------------
+static const ServiceReceiverInterfaceT privateReceiverInterface =
+{
+	.NotificationReceiver = privateNotificationReceiver,
+};
+//==============================================================================
 xResult VirtualGAPServiceAdapterInit(GAPServiceT* service,
 		VirtualGAPServiceAdapterT* adapter,
 		VirtualGAPServiceAdapterInitT* init)

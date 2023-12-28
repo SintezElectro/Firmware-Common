@@ -1,8 +1,8 @@
 //==============================================================================
 //header:
 
-#ifndef _SERVICE_COMMON_REQUESTS_
-#define _SERVICE_COMMON_REQUESTS_
+#ifndef _DEVICE_COMMON_
+#define _DEVICE_COMMON_
 //------------------------------------------------------------------------------
 #ifdef __cplusplus
 extern "C" {
@@ -12,6 +12,7 @@ extern "C" {
 
 #include "Abstractions/xDevice/xDevice.h"
 #include "Abstractions/xPort/xPort.h"
+#include "CAN_Local-Types.h"
 //==============================================================================
 //types:
 
@@ -19,24 +20,10 @@ extern "C" {
 //==============================================================================
 //functions:
 
-xResult ServiceRequestSetId(xServiceT* service, xIAsyncRequestT* asyncRequest, xServiceRequestSetIdT* request);
-
-xResult ServiceRequestGetParameter(xServiceT* sender,
-		xServiceT* recipient,
-		uint16_t action,
-		xIAsyncRequestT* asyncRequest,
-		void* data,
-		uint8_t dataSize);
-
-xResult ServiceRequestSetParameter(xServiceT* sender,
-		xServiceT* recipient,
-		uint16_t action,
-		xIAsyncRequestT* asyncRequest,
-		void* data,
-		uint8_t dataSize);
+xResult DeviceReceiveData(xDeviceT* device, CAN_LocalSegmentT* segment);
 //==============================================================================
 #ifdef __cplusplus
 }
 #endif
 //------------------------------------------------------------------------------
-#endif //_SERVICE_COMMON_REQUESTS_
+#endif //_DEVICE_COMMON_

@@ -1,8 +1,8 @@
 //==============================================================================
 //includes:
 
-#include <stdlib.h>
-
+#include "Abstractions/xSystem/xSystem.h"
+#include "../Common/DeviceCommon.h"
 #include "HostDevice-Adapter.h"
 #include "VirtualDevice-Adapter.h"
 #include "CAN_Local-Types.h"
@@ -35,7 +35,8 @@ static void privateDHCPHandler(xDeviceT* device, HostDeviceAdapterT* adapter, CA
 		{
 			CAN_LocalRequestContentDHCPGetIdT reuqest = { .Value = segment->Data.Content };
 			CAN_LocalCharacteristicDHCPGetIdT characteristic = { .Value = segment->DHCP_Header.Characteristic };
-			uint16_t id = random() & 0x1FFF;
+			//uint16_t id = random() & 0x1FFF;
+			uint16_t id = xSystemGetRandom() & 0x1FFF;
 
 			xDeviceListElementT* element = xListStartEnumeration((void*)&device->Devices);
 			uint8_t isContained = false;
@@ -80,6 +81,8 @@ static void privateDHCPHandler(xDeviceT* device, HostDeviceAdapterT* adapter, CA
 				xDeviceInit(newDevice, &deviceInit);
 
 				xDeviceAddDevice(device, newDevice);
+
+				device->EventListener((void*)device, xDeviceEventAddNewDevice, 0, newDevice);
 			}
 
 			CAN_LocalResponseContentDHCPGetIdT response;
@@ -122,21 +125,7 @@ static void PrivateHandler(xDeviceT* device)
 			}
 		}
 
-		xServiceListElementT* element = xListStartEnumeration((xListT*)&device->Services);
-
-		while (element)
-		{
-			xServiceT* service = element->Value;
-			
-			if (service->Adapter.Interface->EventListener)
-			{
-				service->Adapter.Interface->EventListener(service, xServiceAdapterEventRecieveData, 0, segment, NULL);
-			}
-
-			element = element->Next;
-		}
-
-		xListStopEnumeration((xListT*)&device->Services);
+		DeviceReceiveData(device, segment);
 
 		end:;
 		adapter->Content.RxPacketHandlerIndex++;
@@ -197,6 +186,9 @@ xResult HostDeviceAdapterInit(xDeviceT* device, HostDeviceAdapterT* adapter, Hos
 		adapter->TransferLayer = init->TransferLayer;
 
 		adapter->Content.PortRxCircleBuffer = xPortGetRxCircleBuffer(adapter->Port);
+
+		//device->Services.Content = xSemaphoreCreateMutex();
+		//device->Devices.Content = xSemaphoreCreateMutex();
 
 		return xResultAccept;
 	}

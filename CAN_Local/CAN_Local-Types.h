@@ -216,6 +216,8 @@ typedef union
 
 } CAN_LocalResponseContentDHCPGetIdT;
 //------------------------------------------------------------------------------
+typedef uint64_t CAN_LocalBroadcastContentBaseT;
+//------------------------------------------------------------------------------
 
 typedef union
 {
@@ -268,6 +270,7 @@ typedef struct PACKED_PREFIX
 	uint16_t Action;
 
 } CAN_LocalResponseDescriptionT;
+
 //------------------------------------------------------------------------------
 
 typedef union PACKED_PREFIX
@@ -291,13 +294,24 @@ typedef union PACKED_PREFIX
 
 } CAN_LocalRequestContentT;
 //------------------------------------------------------------------------------
+typedef union
+{
+	uint8_t Bytes[4];
+	uint16_t HalfWords[2];
+	uint32_t Word;
+
+	uint32_t Content;
+
+} CAN_LocalResponseContentDataT;
+//------------------------------------------------------------------------------
 typedef union PACKED_PREFIX
 {
 	struct
 	{
 		CAN_LocalResponseDescriptionT Description;
+		CAN_LocalResponseContentDataT Data;
 
-		union
+		/*union
 		{
 			uint8_t Bytes[4];
 			uint16_t HalfWords[2];
@@ -305,7 +319,7 @@ typedef union PACKED_PREFIX
 
 			uint32_t Content;
 
-		} Data;
+		} Data;*/
 	};
 
 	uint64_t Value;
@@ -336,6 +350,8 @@ typedef union
 	{
 		uint16_t ServiceId;
 		uint16_t Action;
+
+		uint16_t ContantSize;
 
 		uint16_t Id : 8;
 		uint16_t Type : 2;

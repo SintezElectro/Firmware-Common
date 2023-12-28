@@ -19,12 +19,12 @@
 //==============================================================================
 //variables:
 
-GAPServiceT Device1GAP;
+GAPServiceT Device1GAP DEVICE1_LOCAL_SERVICES_MEM_SECTION;
 
-TemperatureServiceT TemperatureService3;
-TemperatureServiceT TemperatureService4;
+TemperatureServiceT TemperatureService3 DEVICE1_LOCAL_SERVICES_MEM_SECTION;
+TemperatureServiceT TemperatureService4 DEVICE1_LOCAL_SERVICES_MEM_SECTION;
 
-xDeviceT Device1;
+xDeviceT Device1 DEVICE1_MEM_SECTION;
 //==============================================================================
 //functions:
 
@@ -70,20 +70,20 @@ static void privateDeviceGAPEventListener(xServiceT* service, int selector, void
 //==============================================================================
 //initializations:
 
-static GAPServiceAdapterT privateGAPServiceAdapter;
+static GAPServiceAdapterT privateGAPServiceAdapter DEVICE1_LOCAL_SERVICES_MEM_SECTION;
 
-static ClientDeviceAdapterT privateDeviceAdapter;
+static ClientDeviceAdapterT privateDeviceAdapter DEVICE1_MEM_SECTION;
 
-static TemperatureServiceAdapterT privateTemperatureServiceAdapter1;
-static TemperatureServiceAdapterT privateTemperatureServiceAdapter2;
+static TemperatureServiceAdapterT privateTemperatureServiceAdapter1 DEVICE1_LOCAL_SERVICES_MEM_SECTION;
+static TemperatureServiceAdapterT privateTemperatureServiceAdapter2 DEVICE1_LOCAL_SERVICES_MEM_SECTION;
 //==============================================================================
 //initialization:
 
 xResult Device1ComponentInit(void* parent)
 {
-	ClientDeviceAdapterInitT deviceAdapterInit;
+	ClientDeviceAdapterInitT deviceAdapterInit = { 0 };
+	deviceAdapterInit.TransferLayer = DEVICE_1_TRANSFER_LAYER;
 	deviceAdapterInit.Port = &DEVICE_1_PORT;
-	deviceAdapterInit.TransferLayer = &LocalTransferLayer;
 	ClientDeviceAdapterInit(&Device1, &privateDeviceAdapter, &deviceAdapterInit);
 
 	xDeviceInitT deviceInit = { 0 };

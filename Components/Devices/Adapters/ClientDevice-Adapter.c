@@ -1,6 +1,7 @@
 //==============================================================================
 //includes:
 
+#include "../Common/DeviceCommon.h"
 #include "Abstractions/xSystem/xSystem.h"
 #include "CAN_Local-Types.h"
 #include "ClientDevice-Adapter.h"
@@ -39,22 +40,8 @@ static void PrivateHandler(xDeviceT* device)
 				goto end;
 			}
 		}
-		
-		xServiceListElementT* element = xListStartEnumeration((xListT*)&device->Services);
 
-		while (element)
-		{
-			xServiceT* service = element->Value;
-			
-			if (service->Adapter.Interface->EventListener)
-			{
-				service->Adapter.Interface->EventListener(service, xServiceAdapterEventRecieveData, 0, segment, NULL);
-			}
-
-			element = element->Next;
-		}
-
-		xListStopEnumeration((xListT*)&device->Services);
+		DeviceReceiveData(device, segment);
 
 		end:;
 		adapter->Content.RxPacketHandlerIndex++;
@@ -135,7 +122,7 @@ static xResult PrivateRequestListener(xDeviceT* device, xDeviceAdapterRequestSel
 	return xResultAccept;
 }
 //------------------------------------------------------------------------------
-static void PrivateEventListener(xDeviceT* device, xDeviceAdapterEventSelector selector, void* arg)
+static void PrivateEventListener(xDeviceT* device, xDeviceAdapterEventSelector selector, uint32_t description, void* in, void* out)
 {
 	//register UsartPortAdapterT* adapter = (UsartPortAdapterT*)port->Adapter;
 
@@ -169,6 +156,9 @@ xResult ClientDeviceAdapterInit(xDeviceT* device, ClientDeviceAdapterT* adapter,
 		adapter->TransferLayer = init->TransferLayer;
 
 		adapter->Content.PortRxCircleBuffer = xPortGetRxCircleBuffer(adapter->Port);
+
+		//device->Services.Content = xSemaphoreCreateMutex();
+		//device->Devices.Content = xSemaphoreCreateMutex();
 
 		return xResultAccept;
 	}

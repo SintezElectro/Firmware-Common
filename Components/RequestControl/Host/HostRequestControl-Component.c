@@ -16,7 +16,7 @@
 //==============================================================================
 //variables:
 
-static CAN_LocalRequestT CAN_LocalRequestBuffer[HOST_REQUEST_CONTROL_BUFFER_SIZE];
+static CAN_LocalRequestT CAN_LocalRequestBuffer[HOST_REQUEST_CONTROL_BUFFER_SIZE] HOST_REQUEST_CONTROL_BUFFER_MEM_SECTION;
 
 xRequestControlT HostRequestControl;
 //==============================================================================

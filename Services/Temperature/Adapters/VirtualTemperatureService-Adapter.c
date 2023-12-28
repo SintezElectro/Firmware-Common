@@ -1,13 +1,13 @@
 //==============================================================================
 //includes:
 
-#include <stdlib.h>
+#include "Services/Common/ServiceCommon.h"
 #include "Common/xMemory.h"
 #include "Common/xCircleBuffer.h"
 #include "VirtualTemperatureService-Adapter.h"
 #include "Abstractions/xSystem/xSystem.h"
 #include "CAN_Local-Types.h"
-#include "Services/Common/VirtualServiceCommonRequests.h"
+#include "Services/Common/VirtualServiceCommon.h"
 #include "Components.h"
 //==============================================================================
 //defines:
@@ -20,131 +20,38 @@
 //==============================================================================
 //variables:
 
+static const ServiceReceiverInterfaceT privateReceiverInterface;
+
 static volatile uint32_t TemperatureServiceTotalTime;
 //==============================================================================
 //functions:
 
-static void privateNotificationHandler(TemperatureServiceT* service,
-		VirtualTemperatureServiceAdapterT* adapter,
-		CAN_LocalSegmentT* segment)
+static xResult privateNotificationReceiver(xServiceT* service,
+		xPortT* port,
+		CAN_LocalSegmentT* segment,
+		CAN_LocalBaseEventPacketT payload)
 {
-	CAN_LocalBaseEventPacketT content = { .Value = segment->Data.Value };
+	ServiceSendToSubscribers(service, 0, 0, NULL);
 
-	if (segment->Header.ServiceType == service->Base.Info.Type && content.Id == service->Base.Id)
-	{
-		xServiceSubscriberListElementT* element = service->Base.Subscribers.Head;
-
-		while (element)
-		{
-			xServiceSubscriberT* subscriber = element->Value;
-
-			if (subscriber->EventListener)
-			{
-				subscriber->EventListener((void*)service, subscriber, 0, &content.Content);
-			}
-
-			element = element->Next;
-		}
-	}
+	return xResultAccept;
 }
 //------------------------------------------------------------------------------
-static void privateExtensionNotificationHandler(TemperatureServiceT* service,
-		VirtualTemperatureServiceAdapterT* adapter,
-		CAN_LocalSegmentT* segment)
+static xResult privateBroadcastRequestReceiver(xServiceT* service,
+		xPortT* port,
+		CAN_LocalSegmentT* segment,
+		uint64_t payload)
 {
-	if (segment->ExtensionHeader.ServiceType == service->Base.Info.Type
-		&& segment->ExtensionHeader.ServiceId == service->Base.Id)
+	switch (segment->ExtensionHeader.PacketType)
 	{
-		switch (segment->ExtensionHeader.PacketType)
+		case CAN_LocalBroadcastPacketTypeIdChanged:
 		{
-			case CAN_LocalTemperatureNotificationUpdateTemperature:
-			{
-				CAN_LocalTemperatureNotificationUpdateTemperatureT content;
-				memcpy(content.Data, segment->Data.Bytes, sizeof(content));
-				service->Temperature = (float)content.Temperature / 1000;
-				break;
-			}
-		}
-
-		xServiceSubscriberListElementT* element = service->Base.Subscribers.Head;
-
-		while (element)
-		{
-			xServiceSubscriberT* subscriber = element->Value;
-
-			if (subscriber->EventListener)
-			{
-				subscriber->EventListener((void*)service, subscriber, 0, &segment->Data.Bytes);
-			}
-
-			element = element->Next;
+			CAN_LocalBroadcastContentIdChangedT content = { .Value = payload };
+			service->Id = content.NewId;
+			break;
 		}
 	}
-}
-//------------------------------------------------------------------------------
-static void privateExtensionBroadcastHandler(TemperatureServiceT* service,
-		VirtualTemperatureServiceAdapterT* adapter,
-		CAN_LocalSegmentT* segment)
-{
 
-	if (segment->ExtensionHeader.ServiceId == service->Base.Id)
-	{
-		switch (segment->ExtensionHeader.PacketType)
-		{
-			case CAN_LocalBroadcastPacketTypeIdChanged:
-			{
-				volatile CAN_LocalBroadcastContentIdChangedT content = { .Value = segment->Data.Value };
-				service->Base.Id = content.NewId;
-				break;
-			}
-		}
-	}
-}
-//------------------------------------------------------------------------------
-static void privateReceiver(TemperatureServiceT* service, VirtualTemperatureServiceAdapterT* adapter, CAN_LocalSegmentT* segment)
-{
-	if (segment->ExtensionIsEnabled)
-	{
-		switch((uint8_t)segment->ExtensionHeader.MessageType)
-		{
-			case CAN_LocalMessageTypeTransfer:
-			{
-				switch((uint8_t)segment->ExtensionHeader.PacketType)
-				{
-					/*case CAN_LocalTransferPacketTypeOpenTransfer:
-						privateOpenTransferHandler(service, adapter, segment);
-						break;*/
-				}
-				break;
-			}
-			case CAN_LocalMessageTypeNotification:
-			{
-				privateExtensionNotificationHandler(service, adapter, segment);
-				break;
-			}
-			case CAN_LocalMessageTypeBroadcast:
-			{
-				privateExtensionBroadcastHandler(service, adapter, segment);
-				break;
-			}
-		}
-	}
-	else
-	{
-		switch((uint8_t)segment->Header.MessageType)
-		{
-			case CAN_LocalMessageTypeNotification:
-			{
-				privateNotificationHandler(service, adapter, segment);
-				break;
-			}
-		}
-	}
-}
-//------------------------------------------------------------------------------
-static void privateHandler(TemperatureServiceT* service)
-{
-	
+	return xResultAccept;
 }
 //------------------------------------------------------------------------------
 static xResult privateRequestListener(TemperatureServiceT* service, int selector, uint32_t mode, void* in, void* out)
@@ -175,13 +82,23 @@ static void privateEventListener(TemperatureServiceT* service, int selector, uin
 	{
 		case xServiceAdapterEventRecieveData:
 		{
-			privateReceiver(service, service->Base.Adapter.Content, in);
+			uint8_t isPersonal = ServicePacketReceiver((void*)service,
+					NULL,
+					&privateReceiverInterface,
+					in) == xResultAccept;
+
+			*(uint8_t*)out = isPersonal;
 			break;
 		}
 
 		default:
 			break;
 	}
+}
+//------------------------------------------------------------------------------
+static void privateHandler(TemperatureServiceT* service)
+{
+
 }
 //==============================================================================
 //initializations:
@@ -192,7 +109,15 @@ static TemperatureServiceAdapterInterfaceT privateInterface =
 	.RequestListener = (xServiceAdapterRequestListenerT)privateRequestListener,
 	.EventListener = (xServiceAdapterEventListenerT)privateEventListener,
 };
+
 //------------------------------------------------------------------------------
+static const ServiceReceiverInterfaceT privateReceiverInterface =
+{
+	.NotificationReceiver = privateNotificationReceiver,
+	.BroadcastRequestReceiver = privateBroadcastRequestReceiver
+};
+
+//==============================================================================
 xResult VirtualTemperatureServiceAdapterInit(TemperatureServiceT* service,
 		VirtualTemperatureServiceAdapterT* adapter,
 		VirtualTemperatureServiceAdapterInitT* init)

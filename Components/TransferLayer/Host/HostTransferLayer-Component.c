@@ -23,7 +23,7 @@
 //==============================================================================
 //variables:
 
-static CAN_LocalTransferT CAN_HostTransfersBuffer[HOST_TRANSFER_LAYER_BUFFER_SIZE];
+static CAN_LocalTransferT CAN_HostTransfersBuffer[HOST_TRANSFER_LAYER_BUFFER_SIZE] HOST_TRANSFER_LAYER_BUFFER_MEM_SECTION;
 
 xTransferLayerT HostTransferLayer;
 
@@ -82,7 +82,10 @@ void HostTransferLayerComponentHandler()
 				privateMasterTransfer->DataLength = sizeof_str(TEMPERATURE_SERVICE_TX_DATA);
 			}
 
-			xTransferLayerAdd(&HostTransferLayer, privateMasterTransfer);
+			xTransferLayerAdd(&HostTransferLayer,
+					privateMasterTransfer,
+					0,
+					1000);
 		}
 	}
 
